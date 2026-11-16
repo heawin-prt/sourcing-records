@@ -1,0 +1,9 @@
+{
+  "name": "采购记录 Sourcing Records",
+  "short_name": "采购记录",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f6fa",
+  "theme_color": "#2f6fde",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

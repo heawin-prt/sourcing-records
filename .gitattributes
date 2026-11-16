@@ -1,0 +1,5 @@
+# 统一 LF；第三方库和模型文件原样保存
+* text=auto eol=lf
+app/vendor/** -text
+*.wasm binary
+*.gz binary
