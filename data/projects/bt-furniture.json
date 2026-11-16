@@ -1,0 +1,510 @@
+{
+ "format": "sourcing-records-project",
+ "version": 1,
+ "project": {
+  "id": "bt-furniture",
+  "name": "B&T Furniture",
+  "location": "New House",
+  "date": "2026-11-16",
+  "desc": "Furniture and built-in closets for the New House: staff apartment, main apartment and hotel. Preferred brands: Crate & Barrel (crateandbarrel.ca), B&B Italia, BoConcept, 2Modern. Style: natural light wood (oak/ash), warm neutral fabrics."
+ },
+ "items": [
+  {
+   "id": "bt-furniture-i01",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Closet – hallway to bath",
+   "qty": 1,
+   "fields": {
+    "room": "Staff apt · Hallway to bath",
+    "size": "114 × 41 × 229 cm (L × D × H)",
+    "special": "Height includes 13 cm kick plate"
+   },
+   "status": "todo",
+   "order": 1
+  },
+  {
+   "id": "bt-furniture-i02",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Closet – entrance",
+   "qty": 1,
+   "fields": {
+    "room": "Staff apt · Entrance",
+    "size": "188 × 71 × 229 cm (L × D × H)",
+    "special": "Height includes 13 cm kick plate; drywall needs to be taken away"
+   },
+   "status": "todo",
+   "order": 2
+  },
+  {
+   "id": "bt-furniture-i03",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Small bench",
+   "qty": 1,
+   "fields": {
+    "room": "Staff apt · Entrance"
+   },
+   "status": "todo",
+   "order": 3
+  },
+  {
+   "id": "bt-furniture-i04",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Sideboard",
+   "qty": 1,
+   "fields": {
+    "room": "Staff apt · Living"
+   },
+   "status": "todo",
+   "order": 4
+  },
+  {
+   "id": "bt-furniture-i05",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Sofa (sofa bed)",
+   "qty": 1,
+   "fields": {
+    "room": "Staff apt · Living"
+   },
+   "status": "todo",
+   "order": 5
+  },
+  {
+   "id": "bt-furniture-i06",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Couch table",
+   "qty": 1,
+   "fields": {
+    "room": "Staff apt · Living"
+   },
+   "status": "todo",
+   "order": 6
+  },
+  {
+   "id": "bt-furniture-i07",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "King bed",
+   "qty": 1,
+   "fields": {
+    "room": "Staff apt · Bedroom"
+   },
+   "status": "todo",
+   "order": 7
+  },
+  {
+   "id": "bt-furniture-i08",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Bedside tables",
+   "qty": null,
+   "fields": {
+    "room": "Staff apt · Bedroom"
+   },
+   "status": "todo",
+   "order": 8
+  },
+  {
+   "id": "bt-furniture-i09",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Desk chair",
+   "qty": 1,
+   "fields": {
+    "room": "Staff apt · Bedroom"
+   },
+   "status": "todo",
+   "order": 9
+  },
+  {
+   "id": "bt-furniture-i10",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Closet – hallway",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Hallway",
+    "size": "287 × 64 × 229 cm (L × D × H)",
+    "special": "Height includes 13 cm kick plate"
+   },
+   "status": "todo",
+   "order": 10
+  },
+  {
+   "id": "bt-furniture-i11",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Closet solution for hallway with steep slope",
+   "qty": null,
+   "fields": {
+    "room": "Main apt · Hallway",
+    "special": "Eventually – optional"
+   },
+   "status": "todo",
+   "order": 11
+  },
+  {
+   "id": "bt-furniture-i12",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Upper cabinets",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Laundry room",
+    "size": "168 × 33 × 130 cm (L × D × H)"
+   },
+   "status": "todo",
+   "order": 12
+  },
+  {
+   "id": "bt-furniture-i13",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Cabinet with sink",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Laundry room",
+    "spec": "Sink 53 cm"
+   },
+   "status": "todo",
+   "order": 13
+  },
+  {
+   "id": "bt-furniture-i14",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Bed",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Main bedroom"
+   },
+   "status": "todo",
+   "order": 14
+  },
+  {
+   "id": "bt-furniture-i15",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Side table",
+   "qty": null,
+   "fields": {
+    "room": "Main apt · Main bedroom"
+   },
+   "status": "todo",
+   "order": 15
+  },
+  {
+   "id": "bt-furniture-i16",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Chair",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Main bedroom"
+   },
+   "status": "todo",
+   "order": 16
+  },
+  {
+   "id": "bt-furniture-i17",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Dresser",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Main bedroom"
+   },
+   "status": "todo",
+   "order": 17
+  },
+  {
+   "id": "bt-furniture-i18",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Bed",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Guest bedroom"
+   },
+   "status": "todo",
+   "order": 18
+  },
+  {
+   "id": "bt-furniture-i19",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Side table",
+   "qty": null,
+   "fields": {
+    "room": "Main apt · Guest bedroom"
+   },
+   "status": "todo",
+   "order": 19
+  },
+  {
+   "id": "bt-furniture-i20",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Chair",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Guest bedroom"
+   },
+   "status": "todo",
+   "order": 20
+  },
+  {
+   "id": "bt-furniture-i21",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Cupboard",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Guest bedroom"
+   },
+   "status": "todo",
+   "order": 21
+  },
+  {
+   "id": "bt-furniture-i22",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Chairs",
+   "qty": 2,
+   "fields": {
+    "room": "Main apt · Flex room"
+   },
+   "status": "todo",
+   "order": 22
+  },
+  {
+   "id": "bt-furniture-i23",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Lounge table",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Flex room"
+   },
+   "status": "todo",
+   "order": 23
+  },
+  {
+   "id": "bt-furniture-i24",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Couch with ottoman (flex)",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Living/Dining",
+    "size": "239 cm"
+   },
+   "status": "todo",
+   "order": 24
+  },
+  {
+   "id": "bt-furniture-i25",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Low table",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Living/Dining"
+   },
+   "status": "todo",
+   "order": 25
+  },
+  {
+   "id": "bt-furniture-i26",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Chairs",
+   "qty": 2,
+   "fields": {
+    "room": "Main apt · Living/Dining"
+   },
+   "status": "todo",
+   "order": 26
+  },
+  {
+   "id": "bt-furniture-i27",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "High board (separation)",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Living/Dining"
+   },
+   "status": "todo",
+   "order": 27
+  },
+  {
+   "id": "bt-furniture-i28",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Dining table",
+   "qty": 1,
+   "fields": {
+    "room": "Main apt · Living/Dining",
+    "size": "254 cm long"
+   },
+   "status": "todo",
+   "order": 28
+  },
+  {
+   "id": "bt-furniture-i29",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Dining chairs",
+   "qty": null,
+   "fields": {
+    "room": "Main apt · Living/Dining"
+   },
+   "status": "todo",
+   "order": 29
+  },
+  {
+   "id": "bt-furniture-i30",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Couch table",
+   "qty": 1,
+   "fields": {
+    "room": "Hotel · Living"
+   },
+   "status": "todo",
+   "order": 30
+  },
+  {
+   "id": "bt-furniture-i31",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Hatch for alcohol (bar cabinet)",
+   "qty": 1,
+   "fields": {
+    "room": "Hotel · Living",
+    "size": "Max 119 × 48 × 203 cm (L × D × H)"
+   },
+   "status": "todo",
+   "order": 31
+  },
+  {
+   "id": "bt-furniture-i32",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Dining tables",
+   "qty": 3,
+   "fields": {
+    "room": "Hotel · Dining",
+    "size": "Top 80 × 90 cm or 90 × 90 cm, height 75 cm",
+    "material": "Ash wood"
+   },
+   "status": "todo",
+   "order": 32
+  },
+  {
+   "id": "bt-furniture-i33",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Bed",
+   "qty": 1,
+   "fields": {
+    "room": "Hotel · Guest suite 1"
+   },
+   "status": "todo",
+   "order": 33
+  },
+  {
+   "id": "bt-furniture-i34",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Side tables",
+   "qty": null,
+   "fields": {
+    "room": "Hotel · Guest suite 1"
+   },
+   "status": "todo",
+   "order": 34
+  },
+  {
+   "id": "bt-furniture-i35",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Sofa",
+   "qty": 1,
+   "fields": {
+    "room": "Hotel · Guest suite 1",
+    "size": "Max 140 cm"
+   },
+   "status": "todo",
+   "order": 35
+  },
+  {
+   "id": "bt-furniture-i36",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Chair",
+   "qty": 1,
+   "fields": {
+    "room": "Hotel · Guest suite 1"
+   },
+   "status": "todo",
+   "order": 36
+  },
+  {
+   "id": "bt-furniture-i37",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Sofa table",
+   "qty": 1,
+   "fields": {
+    "room": "Hotel · Guest suite 1"
+   },
+   "status": "todo",
+   "order": 37
+  },
+  {
+   "id": "bt-furniture-i38",
+   "projectId": "bt-furniture",
+   "category": "furniture",
+   "name": "Chair for workstation",
+   "qty": 1,
+   "fields": {
+    "room": "Hotel · Guest suite 1"
+   },
+   "status": "todo",
+   "order": 38
+  },
+  {
+   "id": "bt-furniture-i39",
+   "projectId": "bt-furniture",
+   "category": "general",
+   "name": "Door hardware",
+   "qty": null,
+   "fields": {
+    "room": "Nice to have",
+    "special": "Nicer door hardware – optional"
+   },
+   "status": "todo",
+   "order": 39
+  },
+  {
+   "id": "bt-furniture-i40",
+   "projectId": "bt-furniture",
+   "category": "general",
+   "name": "Carpets",
+   "qty": null,
+   "fields": {
+    "room": "Nice to have",
+    "special": "Optional"
+   },
+   "status": "todo",
+   "order": 40
+  }
+ ]
+}

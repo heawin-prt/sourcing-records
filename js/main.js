@@ -11,6 +11,7 @@ import { renderExport } from './views/export.js';
 import { renderSettings } from './views/settings.js';
 import { renderSupplierList, renderSupplierForm } from './views/supplier.js';
 import { renderProducts } from './views/products.js';
+import { importBundledProjects } from './seed.js';
 import { renderProjectNew } from './views/project-new.js';
 
 // 路由表：模式 → 页面函数。参数用 :name 表示。
@@ -83,6 +84,7 @@ async function route() {
 async function init() {
   initLang(await db.getMeta('lang'));
   db.setCurrentUser(await db.getMeta('nickname', ''));
+  await importBundledProjects();
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist().catch(() => {});
   }
