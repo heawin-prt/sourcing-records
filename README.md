@@ -63,6 +63,16 @@ app/                 网页 App（纯静态文件，不需要打包）
   vendor/            第三方库（ExcelJS 4.4.0、exifr 7.1.3，MIT 许可）
 ```
 
+## 正式网址
+
+**https://heawin-prt.github.io/sourcing-records/**（GitHub Pages，仓库 `heawin-prt/sourcing-records`）
+
+发布新版本：改完代码 → 版本号加一 → `git commit` → 运行
+
+```bash
+sh deploy.sh
+```
+
 ## 在电脑上运行
 
 ```bash
