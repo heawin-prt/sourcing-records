@@ -1,0 +1,124 @@
+{
+ "format": "sourcing-records-project",
+ "version": 1,
+ "project": {
+  "id": "bt-electricity",
+  "name": "B&T Electricity",
+  "location": "New House",
+  "date": "2026-11-16",
+  "desc": "Lighting and electrical fittings for the New House. Favourite lamp brand (wall etc.): Occhio (Sento). Preferred brands: Crate & Barrel (crateandbarrel.ca), B&B Italia, BoConcept, 2Modern."
+ },
+ "items": [
+  {
+   "id": "bt-electricity-i01",
+   "projectId": "bt-electricity",
+   "category": "lighting",
+   "name": "Ceiling lights",
+   "qty": 10,
+   "fields": {
+    "room": "Living",
+    "special": "Plus spare"
+   },
+   "status": "todo",
+   "order": 1
+  },
+  {
+   "id": "bt-electricity-i02",
+   "projectId": "bt-electricity",
+   "category": "lighting",
+   "name": "Lights for nook",
+   "qty": 2,
+   "fields": {
+    "room": "Nook"
+   },
+   "status": "todo",
+   "order": 2
+  },
+  {
+   "id": "bt-electricity-i03",
+   "projectId": "bt-electricity",
+   "category": "lighting",
+   "name": "Pendant above dining table",
+   "qty": 1,
+   "fields": {
+    "room": "Dining",
+    "special": "Power outlet is in the middle of the ceiling"
+   },
+   "status": "todo",
+   "order": 3
+  },
+  {
+   "id": "bt-electricity-i04",
+   "projectId": "bt-electricity",
+   "category": "lighting",
+   "name": "Lights for hallway stairs",
+   "qty": 4,
+   "fields": {
+    "room": "Hallway stairs"
+   },
+   "status": "todo",
+   "order": 4
+  },
+  {
+   "id": "bt-electricity-i05",
+   "projectId": "bt-electricity",
+   "category": "lighting",
+   "name": "Bedside table lamps",
+   "qty": 6,
+   "fields": {
+    "room": "Bedrooms"
+   },
+   "status": "todo",
+   "order": 5
+  },
+  {
+   "id": "bt-electricity-i06",
+   "projectId": "bt-electricity",
+   "category": "lighting",
+   "name": "Decorative floor lamp",
+   "qty": 1,
+   "fields": {
+    "room": "Living"
+   },
+   "status": "todo",
+   "order": 6
+  },
+  {
+   "id": "bt-electricity-i07",
+   "projectId": "bt-electricity",
+   "category": "lighting",
+   "name": "Bathroom lights",
+   "qty": null,
+   "fields": {
+    "room": "Bathrooms"
+   },
+   "status": "todo",
+   "order": 7
+  },
+  {
+   "id": "bt-electricity-i08",
+   "projectId": "bt-electricity",
+   "category": "lighting",
+   "name": "Outdoor lamps",
+   "qty": null,
+   "fields": {
+    "room": "Outside"
+   },
+   "status": "todo",
+   "order": 8
+  },
+  {
+   "id": "bt-electricity-i09",
+   "projectId": "bt-electricity",
+   "category": "general",
+   "name": "Plugs and switches (nicer)",
+   "qty": null,
+   "fields": {
+    "room": "Nice to have",
+    "special": "Optional upgrade"
+   },
+   "status": "todo",
+   "order": 9
+  }
+ ]
+}

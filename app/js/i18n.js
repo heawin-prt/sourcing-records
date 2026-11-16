@@ -359,10 +359,10 @@ const DICT = {
   },
 };
 
-let lang = 'zh';
+let lang = 'en';
 
 export function initLang(saved) {
-  lang = saved || ((navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en');
+  lang = saved || 'en'; // 默认英文（2026-11-16 用户确定）；在设置里可切换中文
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
 }
 
