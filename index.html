@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f6fde">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>采购记录</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header id="topbar">
+    <button id="nav-back" class="icon-btn" hidden aria-label="Back">‹</button>
+    <h1 id="title"></h1>
+    <span id="topbar-actions"></span>
+  </header>
+  <main id="app"></main>
+  <div id="toast" role="status"></div>
+  <script src="vendor/exifr.lite.umd.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
