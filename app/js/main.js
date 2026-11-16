@@ -85,6 +85,10 @@ async function init() {
   initLang(await db.getMeta('lang'));
   db.setCurrentUser(await db.getMeta('nickname', ''));
   await importBundledProjects();
+  // 正式网址（https）上启用 Service Worker：保证拿到最新版本，断网也能打开
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW register failed', err));
+  }
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist().catch(() => {});
   }
