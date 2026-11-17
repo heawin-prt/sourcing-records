@@ -11,6 +11,8 @@ export const SUP_FIELDS = [
   { key: 'contact', label: 'contact' },
   { key: 'phone', label: 'phone', type: 'tel' },
   { key: 'email', label: 'email', type: 'email' },
+  { key: 'website', label: 'website', type: 'url', placeholder: 'websiteHint' },
+  { key: 'mainProducts', label: 'mainProducts', placeholder: 'mainProductsHint', multiline: true },
   { key: 'booth', label: 'booth' },
   { key: 'storeLocation', label: 'storeLocation', placeholder: 'storeLocationHint', geo: true },
   { key: 'address', label: 'address' },
@@ -51,6 +53,7 @@ export async function renderSupplierList(app, { pid }, ctx) {
             ${s.contact ? `<span>${esc(s.contact)}</span>` : ''}
             <span>${esc(t('productsCount', { n: used[s.id] || 0 }))}</span>
           </div>
+          ${s.mainProducts ? `<div class="meta desc">${esc(s.mainProducts)}</div>` : ''}
         </div>
       </div>`).join('') : `<p class="empty">${esc(t('noSuppliers'))}</p>`}
     <button class="btn primary fab" id="add">＋ ${esc(t('addSupplier'))}</button>
@@ -97,7 +100,10 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
     </div>
     <form id="form" class="card" autocomplete="off">
       ${SUP_FIELDS.map(f => {
-        const input = `<input type="${f.type || 'text'}" name="${f.key}" value="${esc(sup[f.key] ?? '')}" ${f.placeholder ? `placeholder="${esc(t(f.placeholder))}"` : ''}>`;
+        const ph = f.placeholder ? `placeholder="${esc(t(f.placeholder))}"` : '';
+        const input = f.multiline
+          ? `<textarea name="${f.key}" rows="2" ${ph}>${esc(sup[f.key] ?? '')}</textarea>`
+          : `<input type="${f.type || 'text'}" name="${f.key}" value="${esc(sup[f.key] ?? '')}" ${ph}>`;
         if (!f.geo) return `<label class="field"><span>${esc(t(f.label))}${f.required ? ' *' : ''}</span>${input}</label>`;
         // 门店位置：文字描述 + 可选的手机定位
         return `<div class="field"><span>${esc(t(f.label))}</span>
