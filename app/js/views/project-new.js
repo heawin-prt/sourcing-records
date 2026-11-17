@@ -5,6 +5,7 @@
 import * as db from '../db.js';
 import { t } from '../i18n.js';
 import { esc, $, $$, toast } from '../ui.js';
+import { dateField, bindDateFields } from '../datepicker.js';
 
 export const PROJECT_TYPES = ['procurement', 'exhibition'];
 export const projectType = p => (p?.type === 'exhibition' ? 'exhibition' : 'procurement');
@@ -80,8 +81,8 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
       </div>
 
       <div class="grid2">
-        <label class="field"><span id="date-label">${esc(t(type === 'exhibition' ? 'exDateStart' : 'projectDate'))}</span><input type="date" name="date" value="${v('date')}"></label>
-        <label class="field" id="date-end" ${type === 'exhibition' ? '' : 'hidden'}><span>${esc(t('exDateEnd'))}</span><input type="date" name="dateEnd" value="${v('dateEnd')}"></label>
+        <div class="field"><span id="date-label">${esc(t(type === 'exhibition' ? 'exDateStart' : 'projectDate'))}</span>${dateField('date', project.date)}</div>
+        <div class="field" id="date-end" ${type === 'exhibition' ? '' : 'hidden'}><span>${esc(t('exDateEnd'))}</span>${dateField('dateEnd', project.dateEnd)}</div>
       </div>
 
       <div id="ex-fields2" ${type === 'exhibition' ? '' : 'hidden'}>
@@ -103,6 +104,7 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
   `;
 
   const form = $('#form');
+  bindDateFields(form);
 
   // 切换类型（编辑时）：显示/隐藏对应字段
   function applyType() {

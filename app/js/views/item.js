@@ -3,7 +3,7 @@
 import * as db from '../db.js';
 import { t, getLang } from '../i18n.js';
 import { CATEGORIES, getCategory, fieldsFor, label } from '../templates.js';
-import { esc, $, $$, blobUrl, fmtMoney, fmtDateTime, stars, toast, STATUSES } from '../ui.js';
+import { esc, $, $$, blobUrl, fmtMoney, fmtDateTime, stars, toast, confirmDialog, STATUSES } from '../ui.js';
 import { loadProject } from './summary.js';
 import { productFx } from '../fx.js';
 
@@ -134,7 +134,7 @@ export async function renderItemForm(app, { pid, iid }, ctx) {
     </form>
     ${isNew ? '' : `<button class="btn danger block" id="del">${esc(t('deleteItem'))}</button>`}
     <div class="bottom-bar"><div class="inner">
-      ${isNew ? `<button class="btn" id="save-new">${esc(t('save'))} ＋</button>` : ''}
+      ${isNew ? `<button class="btn" id="save-new">${esc(t('save'))} +</button>` : ''}
       <button class="btn primary" id="save">${esc(t('save'))}</button>
     </div></div>
   `;
@@ -172,7 +172,7 @@ export async function renderItemForm(app, { pid, iid }, ctx) {
   if (isNew) $('#save-new').onclick = () => save(true);
   form.onsubmit = e => { e.preventDefault(); save(false); };
   if (!isNew) $('#del').onclick = async () => {
-    if (!confirm(t('confirmDeleteItem', { name: item.name }))) return;
+    if (!await confirmDialog(t('confirmDeleteItem', { name: item.name }))) return;
     await db.removeItem(item);
     ctx.nav(`/p/${pid}`, true);
   };

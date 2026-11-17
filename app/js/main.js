@@ -76,7 +76,7 @@ async function route() {
     await fn(app, params, ctx, query);
   } catch (err) {
     console.error(err);
-    app.innerHTML = `<p class="empty">出错了 / Error: ${String(err.message || err)}</p>`;
+    app.innerHTML = `<p class="empty">${t('errorPrefix')}: ${String(err.message || err)}</p>`;
   }
   window.scrollTo(0, 0);
 }

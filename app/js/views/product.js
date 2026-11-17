@@ -5,9 +5,10 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, $$, blobUrl, toast, toLocalInput, fromLocalInput } from '../ui.js';
+import { esc, $, $$, blobUrl, toast, toLocalInput, fromLocalInput, confirmDialog } from '../ui.js';
 import { processPhoto } from '../photo.js';
 import { FX_CURRENCIES, getRates, convert } from '../fx.js';
+import { dateField, bindDateFields, refreshDateField } from '../datepicker.js';
 
 const TEXT_FIELDS = ['material', 'size', 'color', 'quality'];
 
@@ -88,8 +89,8 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         <label class="field"><span>${esc(t('moq'))}</span><input type="text" name="moq" value="${esc(p.moq ?? '')}" placeholder="${esc(t('moqHint'))}"></label>
       </div>
       <label class="field"><span>${esc(t('note'))}</span><textarea name="note">${esc(p.note ?? '')}</textarea></label>
-      <label class="field"><span>${esc(t('recordedAt'))}</span>
-        <input type="datetime-local" name="recordedAt" value="${esc(toLocalInput(p.recordedAt))}"></label>
+      <div class="field"><span>${esc(t('recordedAt'))}</span>
+        ${dateField('recordedAt', toLocalInput(p.recordedAt), { time: true })}</div>
     </form>
 
     ${isNew ? '' : `<button class="btn danger block" id="del">${esc(t('deleteProduct'))}</button>`}
@@ -100,6 +101,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   `;
 
   const form = $('#form');
+  bindDateFields(form);
   form.supplierId.value = p.supplierId || '';
 
   // —— 照片 ——
@@ -130,7 +132,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   $('#album').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
   $('#photos').onclick = async e => {
     const b = e.target.closest('[data-del-photo]');
-    if (!b || !confirm(t('deletePhoto'))) return;
+    if (!b || !await confirmDialog(t('deletePhoto'))) return;
     const id = b.dataset.delPhoto;
     p.photoIds = p.photoIds.filter(x => x !== id);
     // 新拍的照片立即删除；原有照片等"保存"时再删除，以便"取消"能撤回
@@ -143,6 +145,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   function setTime(iso) {
     p.recordedAt = iso;
     form.recordedAt.value = toLocalInput(iso);
+    refreshDateField(form.recordedAt);
   }
   form.recordedAt.onchange = () => { timeEdited = true; p.recordedAt = fromLocalInput(form.recordedAt.value); saveDraft(); };
 
@@ -254,7 +257,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   };
 
   if (!isNew) $('#del').onclick = async () => {
-    if (!confirm(t('confirmDeleteProduct'))) return;
+    if (!await confirmDialog(t('confirmDeleteProduct'))) return;
     await clearDraft();
     await db.removeProduct({ ...p, photoIds: [...new Set([...(stored.photoIds || []), ...p.photoIds])] });
     ctx.nav(backPath, true);
