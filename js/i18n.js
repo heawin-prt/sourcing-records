@@ -2,7 +2,7 @@
 
 const DICT = {
   zh: {
-    appName: 'Sourcing',
+    appName: 'Socinfo',
     projects: '采购项目',
     projectsHeading: '项目',
     projectInfo: '项目信息',
@@ -216,7 +216,7 @@ const DICT = {
     dataWarning: '数据只保存在这部手机的浏览器里。换手机或清理浏览器数据前，请先导出。',
   },
   en: {
-    appName: 'Sourcing',
+    appName: 'Socinfo',
     projects: 'Projects',
     projectsHeading: 'Projects',
     projectInfo: 'Project info',

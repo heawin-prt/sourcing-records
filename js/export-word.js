@@ -121,7 +121,7 @@ export async function buildDocx(data, opts) {
   ];
 
   const doc = new Document({
-    creator: 'Sourcing',
+    creator: 'Socinfo',
     title: p.name,
     styles: { default: { document: { run: { size: 18, font: { ascii: 'Arial', hAnsi: 'Arial', eastAsia: 'Microsoft YaHei' } } } } },
     sections: [{
