@@ -67,11 +67,13 @@ const ADDRESS_HINT = /(省|市|区|县|镇|路|街|道|号|大道|广场|大厦|
 const TITLE_RE = /(经理|总经理|总监|董事长|老板|店长|主管|销售|业务|设计师|厂长|Manager|Director|Sales|CEO)/i;
 const BOOTH_RE = /(展位|摊位|铺位|档口|号铺|展厅|Booth|Stand)/i;
 const STORE_RE = /^(门店位置|门店|店铺|店址|Store|Showroom)\s*[:：]?/i;
-const LABEL_RE = /^(公司|单位|名称|姓名|联系人|手机|电话|电话号码|Tel|Mob|Mobile|Phone|微信|WeChat|地址|Add|Address|展位|摊位|E-?mail|邮箱)\s*[:：]?\s*/i;
+const LABEL_RE = /^(公司|单位|名称|姓名|联系人|手机|电话|电话号码|Tel|Mob|Mobile|Phone|微信|WeChat|地址|Add|Address|展位|摊位|E-?mail|邮箱|网址|网站|Web(?:site)?|主营|主营产品|经营范围)\s*[:：]?\s*/i;
+const MAIN_RE = /^(主营产品|主营|经营范围|专业生产|专营|Main products?|Products?)\s*[:：]?\s*/i;
 
 /**
  * 从名片文字中猜出供应商字段。
- * @returns {{name?: string, contact?: string, phone?: string, email?: string, booth?: string, address?: string}}
+ * @returns {{name?: string, contact?: string, phone?: string, email?: string, website?: string, mainProducts?: string,
+ *            booth?: string, storeLocation?: string, address?: string}}
  */
 export function parseCard(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
@@ -90,9 +92,20 @@ export function parseCard(text) {
   const em = text.match(/[A-Za-z0-9_%+\-]+(?:\s*\.\s*[A-Za-z0-9_%+\-]+)*\s*@\s*[A-Za-z0-9\-]+(?:\s*\.\s*[A-Za-z0-9\-]+)*\s*\.\s*[A-Za-z]{2,}/);
   if (em) out.email = em[0].replace(/\s+/g, '');
 
-  const used = new Set(lines.filter(l => l.includes('@')));
+  // 网站：www.xxx.com / http(s)://… / 网址：xxx.com（排除邮箱）
+  const web = text.replace(/\s*\.\s*/g, '.').match(/(?:https?:\/\/)?(?:www\.)[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)+(?:\/\S*)?|https?:\/\/[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)+(?:\/\S*)?|(?:网址|网站|Web(?:site)?)\s*[:：]?\s*([A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)+)/i);
+  if (web) out.website = (web[1] || web[0]).replace(/^(网址|网站|Web(site)?)\s*[:：]?\s*/i, '');
+
+  const used = new Set(lines.filter(l => l.includes('@') || /www\.|https?:\/\/|网址|网站/i.test(l)));
   for (const line of lines) {
+    if (used.has(line)) continue; // 邮箱、网址行
     const bare = line.replace(LABEL_RE, '');
+    // 主营产品（有"主营/经营范围"等标签的行）
+    if (!out.mainProducts && MAIN_RE.test(line)) {
+      out.mainProducts = line.replace(MAIN_RE, '').replace(/^[:：\s]+/, '');
+      used.add(line);
+      continue;
+    }
     // 门店位置（有"门店"标签的行，先于地址判断）
     if (!out.storeLocation && STORE_RE.test(line)) {
       out.storeLocation = line.replace(STORE_RE, '').replace(/^[:：\s]+/, '');

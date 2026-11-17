@@ -47,6 +47,8 @@ export const COLUMNS = [
   { key: 'contact', label: () => t('contact'), group: 'product', width: 10, get: (it, p, s) => s?.contact ?? '' },
   { key: 'phone', label: () => t('phone'), group: 'product', width: 15, get: (it, p, s) => s?.phone ?? '' },
   { key: 'email', label: () => t('email'), group: 'product', width: 22, get: (it, p, s) => s?.email ?? '' },
+  { key: 'website', label: () => t('website'), group: 'product', width: 22, get: (it, p, s) => s?.website ?? '' },
+  { key: 'mainProducts', label: () => t('mainProducts'), group: 'product', width: 24, get: (it, p, s) => s?.mainProducts ?? '' },
   { key: 'booth', label: () => t('booth'), group: 'product', width: 14, get: (it, p, s) => s?.booth ?? '' },
   { key: 'storeLocation', label: () => t('storeLocation'), group: 'product', width: 18, get: (it, p, s) => s?.storeLocation ?? '' },
   { key: 'address', label: () => t('address'), group: 'product', width: 24, get: (it, p, s) => s?.address ?? '' },
