@@ -4,6 +4,34 @@ export function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+import { t } from './i18n.js';
+
+/**
+ * App 自己的确认框（代替系统 confirm()：系统框的按钮语言跟随手机系统，不能随 App 切换中英文）。
+ * @returns {Promise<boolean>}
+ */
+export function confirmDialog(message, okText) {
+  return new Promise(resolve => {
+    const el = document.createElement('div');
+    el.className = 'dialog-mask';
+    el.innerHTML = `<div class="dialog" role="alertdialog">
+      <p>${esc(message)}</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-v="0">${esc(t('cancel'))}</button>
+        <button type="button" class="btn danger-fill" data-v="1">${esc(okText || t('delete'))}</button>
+      </div></div>`;
+    const done = v => { el.remove(); window.removeEventListener('hashchange', cancel); resolve(v); };
+    const cancel = () => done(false);
+    el.onclick = e => {
+      if (e.target === el) return done(false);
+      const b = e.target.closest('[data-v]');
+      if (b) done(b.dataset.v === '1');
+    };
+    window.addEventListener('hashchange', cancel);
+    document.body.appendChild(el);
+  });
+}
+
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 

@@ -90,7 +90,7 @@ export async function renderOverview(app, { pid }, ctx) {
     </div>` : ''}
 
     <div id="list"></div>
-    <button class="btn primary fab" id="add-item">＋ ${esc(t('addItem'))}</button>
+    <button class="btn primary fab" id="add-item">+ ${esc(t('addItem'))}</button>
   `;
 
   const renderList = () => {

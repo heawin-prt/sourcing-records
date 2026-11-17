@@ -2,7 +2,7 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, blobUrl, toast } from '../ui.js';
+import { esc, $, blobUrl, toast, confirmDialog } from '../ui.js';
 import { processPhoto } from '../photo.js';
 import { recognize, parseCard } from '../ocr.js';
 
@@ -56,7 +56,7 @@ export async function renderSupplierList(app, { pid }, ctx) {
           ${s.mainProducts ? `<div class="meta desc">${esc(s.mainProducts)}</div>` : ''}
         </div>
       </div>`).join('') : `<p class="empty">${esc(t('noSuppliers'))}</p>`}
-    <button class="btn primary fab" id="add">＋ ${esc(t('addSupplier'))}</button>
+    <button class="btn primary fab" id="add">+ ${esc(t('addSupplier'))}</button>
   `;
 
   $('#add').onclick = () => ctx.nav(`/p/${pid}/supplier/new`);
@@ -146,7 +146,7 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
     $('#card').innerHTML = ph ? `<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" alt=""><button type="button" class="del" id="del-card">✕</button></div>` : '';
     const d = $('#del-card');
     if (d) d.onclick = async () => {
-      if (!confirm(t('deletePhoto'))) return;
+      if (!await confirmDialog(t('deletePhoto'))) return;
       if (newPhotoId) { await db.remove('photos', newPhotoId); newPhotoId = null; }
       cardPhotoId = null;
       renderCard();
@@ -222,7 +222,7 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
 
   if (!isNew) $('#del').onclick = async () => {
     const n = (await db.listByProject('products', pid)).filter(p => p.supplierId === sid).length;
-    if (!confirm(t('confirmDeleteSupplier', { name: sup.name, n }))) return;
+    if (!await confirmDialog(t('confirmDeleteSupplier', { name: sup.name, n }))) return;
     if (sup.cardPhotoId) await db.remove('photos', sup.cardPhotoId);
     await db.remove('suppliers', sid);
     ctx.nav(`/p/${pid}/suppliers`, true);

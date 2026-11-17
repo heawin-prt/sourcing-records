@@ -244,6 +244,18 @@ input.ocr-filled { background: rgba(242, 169, 0, .16); border-color: var(--star)
 .type-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; vertical-align: 2px; color: #fff; background: var(--primary); }
 .type-tag.exhibition { background: #8a5cd6; }
 .seg.seg2 { grid-template-columns: 1fr 1fr; }
+/* 项目列表：第一行占满整行（名称 + 右对齐的类型标签），下面是信息和 Edit/Delete 按钮 */
+.project-row { flex-wrap: wrap; row-gap: 4px; }
+.project-head { flex: 0 0 100%; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.project-head .name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-head .type-tag { flex: none; vertical-align: 0; }
+
+/* App 自己的确认框 */
+.dialog-mask { position: fixed; inset: 0; z-index: 120; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.dialog { width: 100%; max-width: 360px; background: var(--card); color: var(--text); border-radius: 14px; padding: 18px 16px 14px; box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+.dialog p { margin: 0 0 16px; line-height: 1.5; }
+.dialog-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.btn.danger-fill { background: var(--danger); border-color: var(--danger); color: #fff; }
 
 /* 项目基础信息条 */
 .project-info { display: flex; gap: 8px; align-items: baseline; margin: 0 2px 8px; font-size: 14px; color: var(--muted); cursor: pointer; }
@@ -284,6 +296,23 @@ body.picker-open { overflow: hidden; }
 .picker-list .pl { flex: 1; min-width: 0; }
 .picker-list .ps { color: var(--muted); font-size: 13px; white-space: nowrap; }
 .picker-list .dot { vertical-align: middle; }
+
+/* 自制日期选择器 */
+.date-field { display: block; }
+.date-btn { width: 100%; min-height: 44px; font-size: 16px; }
+#datepicker { position: fixed; inset: 0; z-index: 110; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; padding: max(60px, env(safe-area-inset-top)) 12px 12px; }
+.dp-box { width: 100%; max-width: 360px; background: var(--card); color: var(--text); border-radius: 14px; padding: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+.dp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.dp-head b { font-size: 16px; }
+.dp-nav { width: 40px; height: 36px; border: 0; background: none; color: var(--primary); font-size: 26px; cursor: pointer; }
+.dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.dp-wk span { font-size: 12px; color: var(--muted); padding: 4px 0; }
+.dp-grid button { height: 38px; border: 0; border-radius: 8px; background: none; color: var(--text); font: inherit; font-size: 15px; cursor: pointer; }
+.dp-grid button.today { color: var(--primary); font-weight: 700; }
+.dp-grid button.sel { background: var(--primary); color: var(--primary-ink); }
+.dp-time { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+.dp-time select { width: auto; min-height: 36px; padding: 4px 8px; }
+.dp-actions { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
 
 #toast {
   position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);

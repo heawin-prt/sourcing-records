@@ -2,7 +2,7 @@
 
 import * as db from '../db.js';
 import { t, getLang } from '../i18n.js';
-import { esc, $ } from '../ui.js';
+import { esc, $, confirmDialog } from '../ui.js';
 import { projectType, projectSummary } from './project-new.js';
 
 export async function renderProjects(app, _params, ctx) {
@@ -16,9 +16,13 @@ export async function renderProjects(app, _params, ctx) {
   app.innerHTML = `
     <div class="section-title">${esc(t('projectsHeading'))}</div>
     ${projects.length ? projects.map(p => `
-      <div class="list-item" data-open="${esc(p.id)}">
+      <div class="list-item project-row" data-open="${esc(p.id)}">
+        <!-- 第一行：项目名称在前，类型标签靠右，与下面的 Delete 按钮右边对齐 -->
+        <div class="project-head">
+          <span class="name">${esc(p.name)}</span>
+          <span class="type-tag ${projectType(p)}">${esc(t('ptype_' + projectType(p)))}</span>
+        </div>
         <div class="main">
-          <div class="name"><span class="type-tag ${projectType(p)}">${esc(t('ptype_' + projectType(p)))}</span> ${esc(p.name)}</div>
           <div class="meta">
             ${projectSummary(p) ? `<span>${esc(projectSummary(p))}</span>` : ''}
             <span>${esc(t('itemsCount', { n: counts[p.id] }))}</span>
@@ -29,7 +33,7 @@ export async function renderProjects(app, _params, ctx) {
         <button class="btn small" data-edit="${esc(p.id)}">${esc(t('edit'))}</button>
         <button class="btn small danger" data-del="${esc(p.id)}">${esc(t('delete'))}</button>
       </div>`).join('') : `<p class="empty">${esc(t('noProjects'))}</p>`}
-    <button class="btn primary fab" id="new-project">＋ ${esc(t('newProject'))}</button>
+    <button class="btn primary fab" id="new-project">+ ${esc(t('newProject'))}</button>
   `;
 
   $('#new-project').onclick = () => ctx.nav('/new');
@@ -41,7 +45,7 @@ export async function renderProjects(app, _params, ctx) {
       ctx.nav(`/p/${btn.dataset.edit}/info`);
     } else if (btn && btn.dataset.del) {
       const p = projects.find(x => x.id === btn.dataset.del);
-      if (confirm(t('confirmDeleteProject', { name: p.name }))) { await db.removeProject(p.id); renderProjects(app, _params, ctx); }
+      if (await confirmDialog(t('confirmDeleteProject', { name: p.name }))) { await db.removeProject(p.id); renderProjects(app, _params, ctx); }
     } else if (row && !btn) {
       ctx.nav('/p/' + row.dataset.open);
     }

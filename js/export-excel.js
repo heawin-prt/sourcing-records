@@ -206,7 +206,7 @@ export async function buildWorkbook(data, opts) {
 
     // 一组结束：插入分组合计行
     if (subBy !== 'none' && (i === rows.length - 1 || rows[i + 1].g.key !== g.key)) {
-      sumRow(`${t('groupTotal')}：${g.name}`, groupSum, groupStart, row.number, 'FFF1F4FA');
+      sumRow(`${t('groupTotal')}${getLang() === 'en' ? ': ' : '：'}${g.name}`, groupSum, groupStart, row.number, 'FFF1F4FA');
       groupSum = 0;
       groupStart = row.number + 2; // 跳过刚插入的分组合计行
     }
