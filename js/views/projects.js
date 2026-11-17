@@ -3,6 +3,7 @@
 import * as db from '../db.js';
 import { t } from '../i18n.js';
 import { esc, $ } from '../ui.js';
+import { projectType, projectSummary } from './project-new.js';
 
 export async function renderProjects(app, _params, ctx) {
   ctx.setTop(t('appName'), null, `<button class="top-btn" id="go-settings">${esc(t('settings'))}</button>`);
@@ -17,10 +18,9 @@ export async function renderProjects(app, _params, ctx) {
     ${projects.length ? projects.map(p => `
       <div class="list-item" data-open="${esc(p.id)}">
         <div class="main">
-          <div class="name">${esc(p.name)}</div>
+          <div class="name"><span class="type-tag ${projectType(p)}">${esc(t('ptype_' + projectType(p)))}</span> ${esc(p.name)}</div>
           <div class="meta">
-            ${p.location ? `<span>📍${esc(p.location)}</span>` : ''}
-            ${p.date ? `<span>${esc(p.date)}</span>` : ''}
+            ${projectSummary(p) ? `<span>${esc(projectSummary(p))}</span>` : ''}
             <span>${esc(t('itemsCount', { n: counts[p.id] }))}</span>
           </div>
           ${p.desc ? `<div class="meta desc">${esc(p.desc)}</div>` : ''}

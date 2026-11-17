@@ -6,6 +6,7 @@ import { getCategory, label } from '../templates.js';
 import { esc, $, blobUrl, releaseUrls, stars, STATUSES } from '../ui.js';
 import { openPicker } from '../picker.js';
 import { loadProject, coverPhotoId } from './summary.js';
+import { projectSummary } from './project-new.js';
 
 // 记住每个项目的筛选条件（仅本次打开期间）
 const filters = {};
@@ -56,7 +57,7 @@ export async function renderOverview(app, { pid }, ctx) {
     }
   }
 
-  const info = [project.location && `📍${project.location}`, project.date].filter(Boolean).join(' · ');
+  const info = projectSummary(project);
   app.innerHTML = `
     <div class="project-info" id="info">
       <span class="pi-main">${esc(info || t('projectInfoEmpty'))}${project.desc ? ` — ${esc(project.desc)}` : ''}</span>
