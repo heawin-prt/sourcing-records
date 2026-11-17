@@ -3,7 +3,7 @@
 import * as db from '../db.js';
 import { t } from '../i18n.js';
 import { esc, $, confirmDialog } from '../ui.js';
-import { projectSummary } from './project-new.js';
+import { projectType, projectSummary } from './project-new.js';
 
 export async function renderProjects(app, _params, ctx) {
   ctx.setTop(t('appName'), null, `<button class="top-btn" id="go-settings">${esc(t('settings'))}</button>`);
@@ -16,11 +16,13 @@ export async function renderProjects(app, _params, ctx) {
   app.innerHTML = `
     <div class="section-title">${esc(t('projectsHeading'))}</div>
     ${projects.length ? projects.map(p => `
-      <div class="list-item" data-open="${esc(p.id)}">
+      <div class="list-item project-row" data-open="${esc(p.id)}">
+        <!-- 类型标签：项目名称同一行的最右边，与 Delete 按钮右边对齐；其余版式不变 -->
+        <span class="type-tag ${projectType(p)}">${esc(t('ptype_' + projectType(p)))}</span>
         <div class="main">
           <div class="name">${esc(p.name)}</div>
           <div class="meta">
-            ${projectSummary(p) ? `<span>${esc(projectSummary(p))}</span>` : ''}
+            ${projectSummary(p, { pin: false }) ? `<span>${esc(projectSummary(p, { pin: false }))}</span>` : ''}
             <span>${esc(t('itemsCount', { n: counts[p.id] }))}</span>
           </div>
           ${p.desc ? `<div class="meta desc">${esc(p.desc)}</div>` : ''}
