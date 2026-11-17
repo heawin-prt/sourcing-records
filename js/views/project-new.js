@@ -76,6 +76,7 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
 
       <div id="pr-fields" ${type === 'procurement' ? '' : 'hidden'}>
         ${field('location', 'projectLocation')}
+        ${field('purpose', 'projectPurpose', `placeholder="${esc(t('projectPurposeHint'))}"`)}
       </div>
 
       <div class="grid2">
@@ -138,6 +139,7 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
       Object.assign(rec, { exName: val('exName'), city: val('city'), venue: val('venue'), dateEnd: form.dateEnd.value, organizer: val('organizer'), exWebsite: val('exWebsite') });
     } else {
       rec.location = val('location');
+      rec.purpose = val('purpose');
     }
     const saved = await db.put('projects', rec);
     const n = await copySuppliers($$('[name=src]:checked', form).map(x => x.value), saved.id);
