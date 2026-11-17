@@ -56,8 +56,8 @@ export const ctx = {
     else location.hash = path;
   },
   /** 设置页面标题与返回目标 */
-  setTop(title, backPath, actionsHtml = '') {
-    $('#title').textContent = title;
+  setTop(title, backPath, actionsHtml = '', titleHtml = '') {
+    if (titleHtml) $('#title').innerHTML = titleHtml; else $('#title').textContent = title;
     document.title = title === t('appName') ? title : `${title} · ${t('appName')}`;
     const back = $('#nav-back');
     back.hidden = !backPath;

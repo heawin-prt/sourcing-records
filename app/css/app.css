@@ -201,8 +201,10 @@ dl.kv dd { margin: 0; white-space: pre-wrap; word-break: break-word; }
   position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%;
   border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 16px; cursor: pointer;
 }
-.photo-btns { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
-.photo-btns .btn { min-height: 56px; font-size: 18px; }
+/* R6：拍照和相册两个按钮一样大；高度 56 → 45（减 20%）；线框图标 */
+.photo-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.photo-btns .btn { min-height: 45px; font-size: 17px; gap: 8px; }
+.icon { flex: none; display: block; }
 
 /* 评分 */
 .rating { display: flex; gap: 4px; }
@@ -313,3 +315,30 @@ body.picker-open { overflow: hidden; }
   font-size: 15px; opacity: 0; pointer-events: none; transition: .2s; z-index: 50; max-width: 90vw;
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* —— R6 紧凑表单（记录产品、供应商）：所有输入框统一高度 44 → 31（减 30%）—— */
+.form-compact { --box-h: 31px; }
+.form-compact .field { margin-bottom: 8px; }
+.form-compact .field > span { font-size: 13px; margin-bottom: 2px; }
+.form-compact input[type=text], .form-compact input[type=number], .form-compact input[type=tel],
+.form-compact input[type=email], .form-compact input[type=url], .form-compact select,
+.form-compact textarea, .form-compact .date-btn, .form-compact .field .btn {
+  min-height: var(--box-h); height: var(--box-h); padding: 2px 8px; border-radius: 8px;
+}
+.form-compact textarea { resize: none; overflow: hidden; line-height: 1.6; }
+.form-compact .rating button { font-size: 26px; padding: 0 2px; }
+.form-compact .muted:empty { display: none; }
+/* 品名 + 型号同一行 */
+.name-row { display: grid; grid-template-columns: 3fr 2fr; gap: 0 10px; }
+/* 预算 + 币种同一行 */
+.budget-row { display: flex; gap: 6px; }
+.budget-row input { flex: 1; min-width: 0; }
+.budget-row select { flex: 0 0 auto; width: auto; }
+
+/* 物品名称 + ×数量：名称太长只截断名称，数量始终可见 */
+.it-title { display: inline-flex; max-width: 100%; min-width: 0; vertical-align: bottom; }
+.it-title .t-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.it-title .t-qty { flex: none; white-space: nowrap; margin-left: .3em; }
+.photo-grid:empty { display: none; }
+.cat-row { gap: 4px; }
+.cat-row .btn { padding: 0 10px; }

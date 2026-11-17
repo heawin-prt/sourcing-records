@@ -2,8 +2,8 @@
 
 import * as db from './db.js';
 import { t, getLang } from './i18n.js';
-import { CATEGORIES, getCategory, COMMON_FIELDS, label } from './templates.js';
-import { fmtDateTime } from './ui.js';
+import { CATEGORIES, COMMON_FIELDS, label, categoryLabel, isBuiltinCategory } from './templates.js';
+import { fmtDateTime, itemTitle } from './ui.js';
 import { productFx } from './fx.js';
 
 /** 行金额 = 单价 × 数量（产品数量优先，没有则用清单数量）。 */
@@ -30,18 +30,22 @@ function loadExcelJs() {
 
 const itemField = key => {
   const fd = COMMON_FIELDS.find(f => f.key === key);
-  return { key: 'item_' + key, label: () => label(fd, getLang()), group: 'item', width: 16, get: (it) => it.fields?.[key] ?? '' };
+  const get = fd.currency // 预算带币种
+    ? it => (it.fields?.[key] ? `${it.fields[key]} ${it.fields[key + 'Currency'] || 'CNY'}` : '')
+    : it => it.fields?.[key] ?? '';
+  return { key: 'item_' + key, label: () => label(fd, getLang()), group: 'item', width: 16, get };
 };
 
 /** 可导出的列（顺序即 Excel 中的顺序）。 */
 export const COLUMNS = [
-  { key: 'category', label: () => t('category'), group: 'item', width: 10, get: it => label(getCategory(it.category), getLang()) },
+  { key: 'category', label: () => t('category'), group: 'item', width: 10, get: it => categoryLabel(it.category, getLang()) },
   { key: 'itemName', label: () => t('colItemName'), group: 'item', width: 22, get: it => it.name },
   { key: 'qty', label: () => t('qty'), group: 'item', width: 7, get: it => it.qty ?? '', num: true },
   itemField('room'),
   itemField('spec'),
   itemField('special'),
   itemField('budget'),
+  { key: 'itemNote', label: () => t('colItemNote'), group: 'item', width: 24, get: it => it.note ?? '' },
   { key: 'status', label: () => t('status'), group: 'item', width: 10, get: it => t('status_' + (it.status || 'todo')) },
   { key: 'supplierName', label: () => t('supplier'), group: 'product', width: 20, get: (it, p, s) => s?.name ?? '' },
   { key: 'contact', label: () => t('contact'), group: 'product', width: 10, get: (it, p, s) => s?.contact ?? '' },
@@ -53,6 +57,7 @@ export const COLUMNS = [
   { key: 'storeLocation', label: () => t('storeLocation'), group: 'product', width: 18, get: (it, p, s) => s?.storeLocation ?? '' },
   { key: 'address', label: () => t('address'), group: 'product', width: 24, get: (it, p, s) => s?.address ?? '' },
   { key: 'productName', label: () => t('colProductName'), group: 'product', width: 18, get: (it, p) => p?.name ?? '' },
+  { key: 'model', label: () => t('model'), group: 'product', width: 14, get: (it, p) => p?.model ?? '' },
   { key: 'priceCny', label: () => t('priceCny'), group: 'product', width: 12, num: true, money: true, get: (it, p) => p?.priceCny ?? '' },
   { key: 'priceFx', label: () => t('colFx'), group: 'product', width: 14, get: (it, p) => productFx(p) },
   { key: 'productQty', label: () => t('colQty'), group: 'product', width: 8, num: true, get: (it, p) => rowQty(it, p) ?? '' },
@@ -72,7 +77,7 @@ export const COLUMNS = [
   { key: 'recorder', label: () => t('recorder'), group: 'product', width: 10, get: (it, p) => p?.createdBy ?? '' },
 ];
 
-export const DEFAULT_COLUMNS = ['category', 'itemName', 'item_room', 'productName', 'supplierName', 'phone', 'booth',
+export const DEFAULT_COLUMNS = ['category', 'itemName', 'item_room', 'productName', 'model', 'supplierName', 'phone', 'booth',
   'priceCny', 'priceFx', 'productQty', 'amount', 'total', 'rating', 'material', 'size', 'color', 'leadTime', 'moq', 'note'];
 
 /** 导出时的排列/分组方式。 */
@@ -84,11 +89,13 @@ export const GROUP_BY = ['none', 'item', 'category', 'supplier', 'product'];
  */
 function groupOf(by, it, p, supplierMap, itemIndex) {
   if (by === 'item') {
-    return { key: String(itemIndex.get(it.id) ?? 0).padStart(5, '0'), name: it.name };
+    return { key: String(itemIndex.get(it.id) ?? 0).padStart(5, '0'), name: itemTitle(it) };
   }
   if (by === 'category') {
-    const c = getCategory(it.category);
-    return { key: String(CATEGORIES.indexOf(c)).padStart(2, '0'), name: label(c, getLang()) };
+    const k = it.category || 'general';
+    const name = categoryLabel(k, getLang());
+    // 内置品类按固定顺序在前，自定义品类按名称排在后面
+    return isBuiltinCategory(k) ? { key: '0' + CATEGORIES.findIndex(c => c.key === k), name } : { key: '1' + name.toLowerCase(), name };
   }
   if (by === 'supplier') {
     const s = p && supplierMap[p.supplierId];
@@ -96,7 +103,7 @@ function groupOf(by, it, p, supplierMap, itemIndex) {
   }
   if (by === 'product') {
     const name = (p?.name || '').trim();
-    return name ? { key: '0' + name.toLowerCase(), name } : { key: '1' + it.name, name: it.name };
+    return name ? { key: '0' + name.toLowerCase(), name } : { key: '1' + it.name, name: itemTitle(it) };
   }
   return { key: '', name: '' };
 }

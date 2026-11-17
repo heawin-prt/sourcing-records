@@ -5,7 +5,7 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, $$, blobUrl, toast, toLocalInput, fromLocalInput, confirmDialog } from '../ui.js';
+import { esc, $, $$, blobUrl, toast, toLocalInput, fromLocalInput, confirmDialog, itemTitle, itemTitleHtml, ICONS, autoGrow } from '../ui.js';
 import { processPhoto } from '../photo.js';
 import { FX_CURRENCIES, getRates, convert } from '../fx.js';
 import { dateField, bindDateFields, refreshDateField } from '../datepicker.js';
@@ -41,20 +41,24 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   }
   if (p.supplierId && !suppliers.some(s => s.id === p.supplierId)) p.supplierId = null;
 
-  ctx.setTop(isNew ? `${t('addProduct')} · ${item.name}` : item.name, backPath);
+  ctx.setTop(itemTitle(item), backPath, '', itemTitleHtml(item)); // 标题只显示物品名称（带数量）
 
   app.innerHTML = `
     <div class="card">
       <div class="photo-grid" id="photos"></div>
       <div class="photo-btns">
-        <label class="btn primary">📷 ${esc(t('takePhoto'))}<input type="file" accept="image/*" capture="environment" id="cam" hidden></label>
-        <label class="btn">🖼 ${esc(t('fromAlbum'))}<input type="file" accept="image/*" multiple id="album" hidden></label>
+        <label class="btn primary">${ICONS.camera}${esc(t('takePhoto'))}<input type="file" accept="image/*" capture="environment" id="cam" hidden></label>
+        <label class="btn">${ICONS.album}${esc(t('fromAlbum'))}<input type="file" accept="image/*" multiple id="album" hidden></label>
       </div>
     </div>
 
-    <form id="form" class="card" autocomplete="off">
-      <label class="field"><span>${esc(t('productName'))}</span>
-        <input type="text" name="name" value="${esc(p.name ?? '')}"></label>
+    <form id="form" class="card form-compact" autocomplete="off">
+      <div class="name-row">
+        <label class="field"><span>${esc(t('productName'))}</span>
+          <input type="text" name="name" value="${esc(p.name ?? '')}"></label>
+        <label class="field"><span>${esc(t('model'))}</span>
+          <input type="text" name="model" value="${esc(p.model ?? '')}"></label>
+      </div>
       <div class="field"><span class="muted">${esc(t('priceCny'))}</span>
         <div class="price-row">
           <input type="number" inputmode="decimal" step="0.01" name="priceCny" value="${esc(p.priceCny ?? '')}">
@@ -67,8 +71,6 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         </div>
         <div class="muted" id="fx-note"></div>
       </div>
-      <label class="field qty-field"><span>${esc(t('qty'))}</span>
-        <input type="number" inputmode="numeric" name="qty" value="${esc(p.qty ?? '')}"></label>
       <div class="field"><span class="muted">${esc(t('rating'))}</span>
         <div class="rating" id="rating">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-r="${n}" aria-label="${n}">★</button>`).join('')}</div>
       </div>
@@ -87,8 +89,9 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         ${TEXT_FIELDS.map(k => `<label class="field"><span>${esc(t(k))}</span><input type="text" name="${k}" value="${esc(p[k] ?? '')}"></label>`).join('')}
         <label class="field"><span>${esc(t('leadTime'))}</span><input type="number" inputmode="numeric" name="leadTime" value="${esc(p.leadTime ?? '')}"></label>
         <label class="field"><span>${esc(t('moq'))}</span><input type="text" name="moq" value="${esc(p.moq ?? '')}" placeholder="${esc(t('moqHint'))}"></label>
+        <label class="field"><span>${esc(t('plannedQty'))}</span><input type="number" inputmode="numeric" name="qty" value="${esc(p.qty ?? '')}"></label>
       </div>
-      <label class="field"><span>${esc(t('note'))}</span><textarea name="note">${esc(p.note ?? '')}</textarea></label>
+      <label class="field"><span>${esc(t('note'))}</span><textarea name="note" rows="1">${esc(p.note ?? '')}</textarea></label>
       <div class="field"><span>${esc(t('recordedAt'))}</span>
         ${dateField('recordedAt', toLocalInput(p.recordedAt), { time: true })}</div>
     </form>
@@ -102,6 +105,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
 
   const form = $('#form');
   bindDateFields(form);
+  autoGrow(form);
   form.supplierId.value = p.supplierId || '';
 
   // —— 照片 ——
@@ -175,7 +179,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     p.priceCny = num(form.priceCny.value);
     p.qty = num(form.qty.value);
     p.leadTime = num(form.leadTime.value);
-    for (const k of ['name', ...TEXT_FIELDS, 'moq', 'note']) p[k] = form.elements[k].value.trim();
+    for (const k of ['name', 'model', ...TEXT_FIELDS, 'moq', 'note']) p[k] = form.elements[k].value.trim();
     p.supplierId = form.supplierId.value || null;
     p.fxCurrency = form.fxCurrency.value || null;
   }

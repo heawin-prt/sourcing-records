@@ -2,7 +2,7 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, blobUrl, toast, confirmDialog } from '../ui.js';
+import { esc, $, blobUrl, toast, confirmDialog, ICONS, autoGrow } from '../ui.js';
 import { processPhoto } from '../photo.js';
 import { recognize, parseCard } from '../ocr.js';
 
@@ -90,19 +90,16 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
       <h2>${esc(t('cardPhoto'))}</h2>
       <div class="photo-grid" id="card"></div>
       <div class="photo-btns">
-        <label class="btn primary">📷 ${esc(t('scanCard'))}<input type="file" accept="image/*" capture="environment" id="cam" hidden></label>
-        <label class="btn">🖼 ${esc(t('fromAlbum'))}<input type="file" accept="image/*" id="album" hidden></label>
+        <label class="btn primary">${ICONS.camera}${esc(t('scanCard'))}<input type="file" accept="image/*" capture="environment" id="cam" hidden></label>
+        <label class="btn">${ICONS.album}${esc(t('fromAlbum'))}<input type="file" accept="image/*" id="album" hidden></label>
       </div>
-      <div class="row" style="margin-top:8px">
-        <button type="button" class="btn small" id="ocr">🔍 ${esc(t('recognizeCard'))}</button>
-        <span class="muted" id="ocr-status"></span>
-      </div>
+      <div class="muted" id="ocr-status"></div>
     </div>
-    <form id="form" class="card" autocomplete="off">
+    <form id="form" class="card form-compact" autocomplete="off">
       ${SUP_FIELDS.map(f => {
         const ph = f.placeholder ? `placeholder="${esc(t(f.placeholder))}"` : '';
         const input = f.multiline
-          ? `<textarea name="${f.key}" rows="2" ${ph}>${esc(sup[f.key] ?? '')}</textarea>`
+          ? `<textarea name="${f.key}" rows="1" ${ph}>${esc(sup[f.key] ?? '')}</textarea>`
           : `<input type="${f.type || 'text'}" name="${f.key}" value="${esc(sup[f.key] ?? '')}" ${ph}>`;
         if (!f.geo) return `<label class="field"><span>${esc(t(f.label))}${f.required ? ' *' : ''}</span>${input}</label>`;
         // 门店位置：文字描述 + 可选的手机定位
@@ -110,8 +107,8 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
           <div class="row">${input}<button type="button" class="btn" id="geo-btn" title="${esc(t('geoLocate'))}">📍</button></div>
           <div class="muted" id="geo-info"></div></div>`;
       }).join('')}
-      <label class="field"><span>${esc(t('note'))}</span><textarea name="note">${esc(sup.note ?? '')}</textarea></label>
-      <label class="field"><span>${esc(t('ocrText'))}</span><textarea name="ocrText" rows="4">${esc(sup.ocrText ?? '')}</textarea></label>
+      <label class="field"><span>${esc(t('note'))}</span><textarea name="note" rows="1">${esc(sup.note ?? '')}</textarea></label>
+      <label class="field"><span>${esc(t('ocrText'))}</span><textarea name="ocrText" rows="1">${esc(sup.ocrText ?? '')}</textarea></label>
     </form>
     ${isNew ? '' : `<button class="btn danger block" id="del">${esc(t('deleteSupplier'))}</button>`}
     <div class="bottom-bar"><div class="inner">
@@ -121,6 +118,7 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
   `;
 
   const form = $('#form');
+  autoGrow(form);
 
   // —— 门店定位（需要 https 正式网址或 localhost；局域网 http 测试时浏览器不允许定位）——
   let geo = sup.geo || null;
@@ -174,7 +172,6 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
     const status = $('#ocr-status');
     if (!ph) { toast(t('ocrNoCard')); return; }
     ocrBusy = true;
-    $('#ocr').disabled = true;
     status.textContent = t('ocrLoading');
     try {
       const text = await recognize(ph.blob, m => {
@@ -182,6 +179,7 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
         else if (/load|initializ/i.test(m.status)) status.textContent = t('ocrLoading');
       });
       form.ocrText.value = text;
+      autoGrow(form);
       const found = parseCard(text);
       let n = 0;
       for (const [k, v] of Object.entries(found)) {
@@ -193,10 +191,8 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
       status.textContent = t('ocrFailed');
     } finally {
       ocrBusy = false;
-      $('#ocr').disabled = false;
     }
   }
-  $('#ocr').onclick = runOcr;
   form.oninput = e => e.target.classList.remove('ocr-filled');
 
   $('#save').onclick = async () => {
