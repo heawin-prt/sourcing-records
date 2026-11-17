@@ -1,6 +1,6 @@
 {
-  "name": "现场采购 Sourcing Records",
-  "short_name": "现场采购",
+  "name": "Socinfo",
+  "short_name": "Socinfo",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
