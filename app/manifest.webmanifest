@@ -1,7 +1,8 @@
 {
-  "name": "采购记录 Sourcing Records",
-  "short_name": "采购记录",
+  "name": "现场采购 Sourcing Records",
+  "short_name": "现场采购",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f4f6fa",
   "theme_color": "#2f6fde",
