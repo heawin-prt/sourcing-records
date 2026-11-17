@@ -2,7 +2,7 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, blobUrl, releaseUrls, fmtMoney, stars, toast } from '../ui.js';
+import { esc, $, blobUrl, releaseUrls, fmtMoney, stars, toast, itemTitleHtml } from '../ui.js';
 import { productFx } from '../fx.js';
 import { loadProject } from './summary.js';
 import { viewSwitch, supplierOptions } from './overview.js';
@@ -51,7 +51,7 @@ export async function renderProducts(app, { pid }, ctx) {
         const st = it.status || 'todo';
         return `
         <div class="group-head">
-          <span class="name">${esc(it.name)}${it.qty ? ` <span class="muted">×${esc(it.qty)}</span>` : ''}</span>
+          <span class="name">${itemTitleHtml(it)}</span>
           <span class="chip st-${st}">${esc(t('status_' + st))}</span>
         </div>
         ${list.map(p => {

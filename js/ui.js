@@ -96,3 +96,31 @@ export function stars(n) {
 }
 
 export const STATUSES = ['todo', 'pending', 'done', 'notfound'];
+
+/** 清单物品名称：有数量就在后面跟 ×数量，没有就只显示名称（任何地方都用它）。 */
+export function itemTitle(it) {
+  if (!it) return '';
+  return it.qty ? `${it.name} ×${it.qty}` : (it.name || '');
+}
+
+/** 同上，HTML 版：名称太长时只截断名称，数量始终显示。 */
+export function itemTitleHtml(it) {
+  if (!it) return '';
+  return `<span class="it-title"><span class="t-name">${esc(it.name || '')}</span>${it.qty ? `<span class="t-qty">×${esc(it.qty)}</span>` : ''}</span>`;
+}
+
+/** 线框图标（描边随文字颜色）。 */
+const svg = body => `<svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+export const ICONS = {
+  camera: svg('<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/>'),
+  album: svg('<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L6 21"/>'),
+};
+
+/** 多行框平时和其他框一样高，内容多了自动变高。 */
+export function autoGrow(root) {
+  const fit = ta => { ta.style.height = ''; if (ta.scrollHeight > ta.clientHeight) ta.style.height = ta.scrollHeight + 2 + 'px'; };
+  root.querySelectorAll('textarea').forEach(ta => {
+    fit(ta);
+    if (!ta.dataset.grow) { ta.dataset.grow = '1'; ta.addEventListener('input', () => fit(ta)); }
+  }); // 可重复调用：内容被程序改写后再调用一次即可重新适配
+}

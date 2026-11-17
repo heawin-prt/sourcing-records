@@ -2,13 +2,13 @@
 // M1 固定在代码里；M3 起可在 App 内编辑。
 
 export const COMMON_FIELDS = [
-  { key: 'room', zh: '使用场合/房间', en: 'Room / usage' },
+  { key: 'room', zh: '用途', en: 'Usage' },
   { key: 'material', zh: '材料', en: 'Material' },
   { key: 'size', zh: '尺寸', en: 'Size' },
   { key: 'color', zh: '颜色', en: 'Color' },
   { key: 'spec', zh: '规格', en: 'Specification' },
   { key: 'special', zh: '特殊要求', en: 'Special requirements', multiline: true },
-  { key: 'budget', zh: '预算（元）', en: 'Budget (CNY)', type: 'number' },
+  { key: 'budget', zh: '预算', en: 'Budget', type: 'number', currency: true },
 ];
 
 export const CATEGORIES = [
@@ -16,8 +16,6 @@ export const CATEGORIES = [
   {
     key: 'furniture', zh: '家具', en: 'Furniture', fields: [
       { key: 'style', zh: '风格', en: 'Style' },
-      { key: 'fabric', zh: '面料/皮质', en: 'Fabric / leather' },
-      { key: 'knockdown', zh: '是否可拆装', en: 'Knock-down' },
     ],
   },
   {
@@ -41,8 +39,29 @@ export const CATEGORIES = [
   },
 ];
 
+/** 内置品类；自定义品类（用户自己输入的文字）返回"通用"，只用通用字段。 */
 export function getCategory(key) {
   return CATEGORIES.find(c => c.key === key) || CATEGORIES[0];
+}
+
+export function isBuiltinCategory(key) {
+  return CATEGORIES.some(c => c.key === key);
+}
+
+/** 品类显示名：内置品类按语言显示，自定义品类原样显示。 */
+export function categoryLabel(key, lang) {
+  if (!key) return label(CATEGORIES[0], lang);
+  const c = CATEGORIES.find(x => x.key === key);
+  return c ? label(c, lang) : key;
+}
+
+/** 输入的品类文字 → 存储值：和内置品类的中文或英文名相同就存内置键，否则存文字本身。 */
+export function resolveCategory(text) {
+  const v = (text || '').trim();
+  if (!v) return 'general';
+  const low = v.toLowerCase();
+  const c = CATEGORIES.find(x => x.key === low || x.zh === v || x.en.toLowerCase() === low);
+  return c ? c.key : v;
 }
 
 /** 某品类的全部字段（通用字段在前）。 */

@@ -2,8 +2,8 @@
 
 import * as db from '../db.js';
 import { t, getLang } from '../i18n.js';
-import { getCategory, label } from '../templates.js';
-import { esc, $, blobUrl, releaseUrls, stars, STATUSES } from '../ui.js';
+import { categoryLabel } from '../templates.js';
+import { esc, $, blobUrl, releaseUrls, stars, STATUSES, itemTitle, itemTitleHtml } from '../ui.js';
 import { openPicker } from '../picker.js';
 import { loadProject, coverPhotoId } from './summary.js';
 import { projectSummary } from './project-new.js';
@@ -99,21 +99,20 @@ export async function renderOverview(app, { pid }, ctx) {
       if (f.status !== 'all' && (it.status || 'todo') !== f.status) return false;
       if (f.sup && !it._products.some(p => p.supplierId === f.sup)) return false;
       if (!q) return true;
-      const hay = [it.name, ...Object.values(it.fields || {})].join(' ').toLowerCase();
+      const hay = [it.name, it.note, categoryLabel(it.category, lang), ...Object.values(it.fields || {})].join(' ').toLowerCase();
       return hay.includes(q);
     });
     $('#list').innerHTML = !items.length ? `<p class="empty">${esc(t('noItems'))}</p>`
       : !shown.length ? `<p class="empty">${esc(t('noMatch'))}</p>`
       : shown.map(it => {
         const st = it.status || 'todo';
-        const cat = getCategory(it.category);
         return `
         <div class="list-item" data-open="${esc(it.id)}">
           ${thumbs[it.id] ? `<img class="thumb" src="${thumbs[it.id]}" alt="">` : `<div class="thumb ph">📦</div>`}
           <div class="main">
-            <div class="name">${esc(it.name)}${it.qty ? ` <span class="muted">×${esc(it.qty)}</span>` : ''}</div>
+            <div class="name">${itemTitleHtml(it)}</div>
             <div class="meta">
-              <span>${esc(label(cat, lang))}</span>
+              <span>${esc(categoryLabel(it.category, lang))}</span>
               ${it.fields?.room ? `<span>${esc(it.fields.room)}</span>` : ''}
               <span>${esc(t('productsCount', { n: it._products.length }))}</span>
               ${it._best?.rating ? `<span class="stars" title="${esc(t('bestRating', { n: it._best.rating }))}">${stars(it._best.rating)}</span>` : ''}
@@ -147,8 +146,8 @@ export async function renderOverview(app, { pid }, ctx) {
     searchPlaceholder: t('filterPlaceholder'),
     options: items.map(it => ({
       value: it.id,
-      label: it.name,
-      html: `<span class="dot st-${it.status || 'todo'}"></span> ${esc(it.name)}`,
+      label: itemTitle(it),
+      html: `<span class="dot st-${it.status || 'todo'}"></span> ${itemTitleHtml(it)}`,
       sub: [it.fields?.room, t('status_' + (it.status || 'todo'))].filter(Boolean).join(' · '),
     })),
     onPick: v => ctx.nav(`/p/${pid}/item/${v}`),
