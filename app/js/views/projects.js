@@ -1,9 +1,9 @@
 // 项目列表页（需求第 1、2 条：可以有多个采购项目）。
 
 import * as db from '../db.js';
-import { t, getLang } from '../i18n.js';
+import { t } from '../i18n.js';
 import { esc, $, confirmDialog } from '../ui.js';
-import { projectType, projectSummary } from './project-new.js';
+import { projectSummary } from './project-new.js';
 
 export async function renderProjects(app, _params, ctx) {
   ctx.setTop(t('appName'), null, `<button class="top-btn" id="go-settings">${esc(t('settings'))}</button>`);
@@ -16,18 +16,13 @@ export async function renderProjects(app, _params, ctx) {
   app.innerHTML = `
     <div class="section-title">${esc(t('projectsHeading'))}</div>
     ${projects.length ? projects.map(p => `
-      <div class="list-item project-row" data-open="${esc(p.id)}">
-        <!-- 第一行：项目名称在前，类型标签靠右，与下面的 Delete 按钮右边对齐 -->
-        <div class="project-head">
-          <span class="name">${esc(p.name)}</span>
-          <span class="type-tag ${projectType(p)}">${esc(t('ptype_' + projectType(p)))}</span>
-        </div>
+      <div class="list-item" data-open="${esc(p.id)}">
         <div class="main">
+          <div class="name">${esc(p.name)}</div>
           <div class="meta">
             ${projectSummary(p) ? `<span>${esc(projectSummary(p))}</span>` : ''}
             <span>${esc(t('itemsCount', { n: counts[p.id] }))}</span>
           </div>
-          ${p.purpose && projectType(p) === 'procurement' ? `<div class="meta desc">${esc(t('projectPurpose'))}${getLang() === 'en' ? ': ' : '：'}${esc(p.purpose)}</div>` : ''}
           ${p.desc ? `<div class="meta desc">${esc(p.desc)}</div>` : ''}
         </div>
         <button class="btn small" data-edit="${esc(p.id)}">${esc(t('edit'))}</button>

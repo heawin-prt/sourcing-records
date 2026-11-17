@@ -241,14 +241,7 @@ input.ocr-filled { background: rgba(242, 169, 0, .16); border-color: var(--star)
 .type-card .type-icon { font-size: 34px; }
 .type-card .type-text { display: flex; flex-direction: column; gap: 2px; }
 .type-card b { font-size: 17px; }
-.type-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; vertical-align: 2px; color: #fff; background: var(--primary); }
-.type-tag.exhibition { background: #8a5cd6; }
 .seg.seg2 { grid-template-columns: 1fr 1fr; }
-/* 项目列表：第一行占满整行（名称 + 右对齐的类型标签），下面是信息和 Edit/Delete 按钮 */
-.project-row { flex-wrap: wrap; row-gap: 4px; }
-.project-head { flex: 0 0 100%; display: flex; align-items: center; gap: 8px; min-width: 0; }
-.project-head .name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.project-head .type-tag { flex: none; vertical-align: 0; }
 
 /* App 自己的确认框 */
 .dialog-mask { position: fixed; inset: 0; z-index: 120; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
