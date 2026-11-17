@@ -1,28 +1,43 @@
-// 导出页：选择导出哪些产品、哪些列、是否嵌图。
+// 导出页：选择格式（Excel / Word）、导出哪些产品、哪些列、是否嵌图。
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
 import { esc, $, $$, toast, STATUSES } from '../ui.js';
 import { loadProject } from './summary.js';
-import { COLUMNS, DEFAULT_COLUMNS, pickRows, buildWorkbook } from '../export-excel.js';
+import { COLUMNS, DEFAULT_COLUMNS, GROUP_BY, pickRows, buildWorkbook } from '../export-excel.js';
+import { buildDocx } from '../export-word.js';
 
 export async function renderExport(app, { pid }, ctx) {
   const data = await loadProject(pid);
   if (!data) return ctx.nav('/', true);
   ctx.setTop(t('exportTitle'), `/p/${pid}`);
 
-  const DEFAULT_PREFS = { v: 3, mode: 'chosen', includeEmpty: false, columns: DEFAULT_COLUMNS, photos: 1, subtotalBy: 'none', statuses: [...STATUSES] };
+  const DEFAULT_PREFS = { v: 4, mode: 'chosen', includeEmpty: false, columns: DEFAULT_COLUMNS, photos: 1, groupBy: 'none', groupTotals: true, statuses: [...STATUSES] };
   let prefs = await db.getMeta('exportPrefs', DEFAULT_PREFS);
   if (prefs.v === 2) { // 0.5.0：合计改为列选项里的 total
     prefs = { ...prefs, v: 3, columns: prefs.total ? [...prefs.columns, 'total'] : prefs.columns };
   }
-  if (prefs.v !== 3) prefs = DEFAULT_PREFS;
+  if (prefs.v === 3) { // 0.9.0："分组合计"与"排列方式"合并为"排列与分组"＋"每组末尾加合计"
+    const groupBy = prefs.subtotalBy && prefs.subtotalBy !== 'none' ? prefs.subtotalBy : (prefs.sortBy && prefs.sortBy !== 'list' ? prefs.sortBy : 'none');
+    prefs = { ...prefs, v: 4, groupBy, groupTotals: !!(prefs.subtotalBy && prefs.subtotalBy !== 'none') || groupBy === 'none' };
+  }
+  if (prefs.v !== 4) prefs = DEFAULT_PREFS;
   if (!prefs.statuses) prefs = { ...prefs, statuses: [...STATUSES] };
 
   const colBox = c => `<label class="check"><input type="checkbox" name="col" value="${c.key}" ${prefs.columns.includes(c.key) ? 'checked' : ''}>${esc(c.label())}</label>`;
 
+  const FORMATS = { xlsx: 'Excel', docx: 'Word' };
+  if (!FORMATS[prefs.format]) prefs = { ...prefs, format: 'xlsx' };
+
   app.innerHTML = `
     <form id="form">
+      <div class="card">
+        <h2>${esc(t('exportFormat'))}</h2>
+        <div class="seg seg2" id="fmt">
+          ${Object.entries(FORMATS).map(([k, name]) => `<button type="button" data-fmt="${k}" class="${prefs.format === k ? 'on st-done' : ''}">${name}</button>`).join('')}
+        </div>
+      </div>
+
       <div class="card">
         <h2>${esc(t('whichProducts'))}</h2>
         ${['chosen', 'best', 'all'].map(m => `<label class="check"><input type="radio" name="mode" value="${m}" ${prefs.mode === m ? 'checked' : ''}>
@@ -39,8 +54,9 @@ export async function renderExport(app, { pid }, ctx) {
       </div>
 
       <div class="card">
-        <h2>${esc(t('groupTotals'))}</h2>
-        <select name="subtotalBy">${['none', 'category', 'supplier'].map(s => `<option value="${s}" ${prefs.subtotalBy === s ? 'selected' : ''}>${esc(t('sub_' + s))}</option>`).join('')}</select>
+        <h2>${esc(t('groupBy'))}</h2>
+        <select name="groupBy">${GROUP_BY.map(g => `<option value="${g}" ${prefs.groupBy === g ? 'selected' : ''}>${esc(t('group_' + g))}</option>`).join('')}</select>
+        <label class="check" id="gt-wrap" ${prefs.groupBy === 'none' ? 'hidden' : ''}><input type="checkbox" name="groupTotals" ${prefs.groupTotals ? 'checked' : ''}>${esc(t('groupTotalsEach'))}</label>
       </div>
 
       <div class="card">
@@ -61,19 +77,31 @@ export async function renderExport(app, { pid }, ctx) {
     </form>
     <div id="result"></div>
     <div class="bottom-bar"><div class="inner">
-      <button class="btn primary" id="go">${esc(t('generate'))}</button>
+      <button class="btn primary" id="go"></button>
     </div></div>
   `;
 
   const form = $('#form');
+  let format = prefs.format;
+  const paintGo = () => { $('#go').textContent = t('generateAs', { fmt: FORMATS[format] }); };
+  paintGo();
+  $('#fmt').onclick = e => {
+    const b = e.target.closest('[data-fmt]');
+    if (!b) return;
+    format = b.dataset.fmt;
+    $$('#fmt button').forEach(x => { x.className = x.dataset.fmt === format ? 'on st-done' : ''; });
+    paintGo();
+  };
   const readOpts = () => ({
+    format,
     mode: form.querySelector('[name=mode]:checked').value,
     includeEmpty: form.includeEmpty.checked,
     columns: $$('[name=col]:checked', form).map(x => x.value),
     photos: Number(form.photos.value),
-    subtotalBy: form.subtotalBy.value,
+    groupBy: form.groupBy.value,
+    groupTotals: form.groupTotals.checked,
     statuses: $$('[name=st]:checked', form).map(x => x.value),
-    v: 3,
+    v: 4,
   });
 
   const paintCounts = () => {
@@ -86,7 +114,10 @@ export async function renderExport(app, { pid }, ctx) {
     }
   };
   paintCounts();
-  form.onchange = paintCounts;
+  form.onchange = () => {
+    paintCounts();
+    $('#gt-wrap').hidden = form.groupBy.value === 'none'; // 不分组时没有"每组加合计"
+  };
   $('#col-all').onclick = () => $$('[name=col]', form).forEach(x => { x.checked = true; });
   $('#col-none').onclick = () => $$('[name=col]', form).forEach(x => { x.checked = false; });
 
@@ -98,7 +129,7 @@ export async function renderExport(app, { pid }, ctx) {
     btn.disabled = true;
     btn.textContent = t('generating');
     try {
-      const { blob, filename } = await buildWorkbook(data, opts);
+      const { blob, filename } = opts.format === 'docx' ? await buildDocx(data, opts) : await buildWorkbook(data, opts);
       const file = new File([blob], filename, { type: blob.type });
       const url = URL.createObjectURL(blob);
       const canShare = navigator.canShare && navigator.canShare({ files: [file] });
@@ -119,7 +150,7 @@ export async function renderExport(app, { pid }, ctx) {
       toast(String(err.message || err));
     } finally {
       btn.disabled = false;
-      btn.textContent = t('generate');
+      paintGo();
     }
   };
 }

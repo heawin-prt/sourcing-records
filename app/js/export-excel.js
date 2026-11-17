@@ -75,8 +75,17 @@ export const COLUMNS = [
 export const DEFAULT_COLUMNS = ['category', 'itemName', 'item_room', 'productName', 'supplierName', 'phone', 'booth',
   'priceCny', 'priceFx', 'productQty', 'amount', 'total', 'rating', 'material', 'size', 'color', 'leadTime', 'moq', 'note'];
 
-/** 小计分组的键和显示名。 */
-function groupOf(by, it, p, supplierMap) {
+/** 导出时的排列/分组方式。 */
+export const GROUP_BY = ['none', 'item', 'category', 'supplier', 'product'];
+
+/**
+ * 分组的排序键和显示名。
+ * item：按清单顺序逐个物品；category：按品类；supplier：按供应商名称；product：按产品品名（没填品名的用清单品名）。
+ */
+function groupOf(by, it, p, supplierMap, itemIndex) {
+  if (by === 'item') {
+    return { key: String(itemIndex.get(it.id) ?? 0).padStart(5, '0'), name: it.name };
+  }
   if (by === 'category') {
     const c = getCategory(it.category);
     return { key: String(CATEGORIES.indexOf(c)).padStart(2, '0'), name: label(c, getLang()) };
@@ -85,7 +94,11 @@ function groupOf(by, it, p, supplierMap) {
     const s = p && supplierMap[p.supplierId];
     return s ? { key: '0' + (s.name || ''), name: s.name } : { key: '1', name: t('noSupplierGroup') };
   }
-  return null;
+  if (by === 'product') {
+    const name = (p?.name || '').trim();
+    return name ? { key: '0' + name.toLowerCase(), name } : { key: '1' + it.name, name: it.name };
+  }
+  return { key: '', name: '' };
 }
 
 /** 按导出方式挑出 [物品, 产品] 行。 */
@@ -111,22 +124,42 @@ async function imageInfo(blob) {
 }
 
 /**
- * @param {object} data loadProject() 的结果
- * @param {{mode:string, includeEmpty:boolean, columns:string[], photos:number}} opts photos=0 表示不嵌图
- * @returns {Promise<{blob: Blob, filename: string, rowCount: number}>}
+ * Excel 和 Word 共用：按导出选项算出列、行（已按分组排好）、是否要分组合计/总合计。
+ * opts.groupBy：none / item / category / supplier / product；opts.groupTotals：每组末尾是否加合计行。
+ * （兼容 0.9.0 以前保存的 subtotalBy 设置）
  */
-export async function buildWorkbook(data, opts) {
-  const ExcelJS = await loadExcelJs();
-  const subBy = opts.subtotalBy || 'none';
+export function planExport(data, opts) {
+  const groupBy = GROUP_BY.includes(opts.groupBy) ? opts.groupBy : (opts.subtotalBy || 'none');
+  const groupTotals = groupBy !== 'none' && (opts.groupTotals ?? (opts.subtotalBy && opts.subtotalBy !== 'none'));
   const wantTotal = opts.columns.includes('total');
   // 要分组合计或总合计，就必须有小计列
-  const colKeys = (subBy !== 'none' || wantTotal) && !opts.columns.includes('amount') ? [...opts.columns, 'amount'] : opts.columns;
+  const colKeys = (groupTotals || wantTotal) && !opts.columns.includes('amount') ? [...opts.columns, 'amount'] : opts.columns;
   const cols = COLUMNS.filter(c => colKeys.includes(c.key) && !c.rowOnly);
   const nPhotos = opts.photos || 0;
+  // 按分组排列（同组内保持清单顺序）
+  const itemIndex = new Map(data.items.map((it, i) => [it.id, i]));
+  const rows = pickRows(data.items, opts.mode, opts.includeEmpty, opts.statuses)
+    .map(([it, p], i) => ({ it, p, i, g: groupOf(groupBy, it, p, data.supplierMap, itemIndex) }));
+  const locale = getLang() === 'en' ? 'en' : 'zh';
+  rows.sort((a, b) => a.g.key.localeCompare(b.g.key, locale) || a.i - b.i);
+  return { groupBy, groupTotals, wantTotal, cols, nPhotos, rows };
+}
 
-  // 需要小计时按分组排序（同组内保持原顺序）
-  let rows = pickRows(data.items, opts.mode, opts.includeEmpty, opts.statuses).map(([it, p], i) => ({ it, p, i, g: groupOf(subBy, it, p, data.supplierMap) }));
-  if (subBy !== 'none') rows.sort((a, b) => a.g.key.localeCompare(b.g.key, 'zh') || a.i - b.i);
+/**
+ * @param {object} data loadProject() 的结果
+ * @param {object} opts 见 planExport；photos=0 表示不嵌图
+ * @returns {Promise<{blob: Blob, filename: string, rowCount: number}>}
+ */
+
+export function exportFileName(data, ext) {
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  return `${data.project.name.replace(/[\\/:*?"<>|]/g, '_')}-${t('sheetName')}-${stamp}.${ext}`;
+}
+
+export async function buildWorkbook(data, opts) {
+  const ExcelJS = await loadExcelJs();
+  const { groupTotals, wantTotal, cols, nPhotos, rows } = planExport(data, opts);
 
   const wb = new ExcelJS.Workbook();
   wb.creator = 'Site Purchase';
@@ -205,7 +238,7 @@ export async function buildWorkbook(data, opts) {
     }
 
     // 一组结束：插入分组合计行
-    if (subBy !== 'none' && (i === rows.length - 1 || rows[i + 1].g.key !== g.key)) {
+    if (groupTotals && (i === rows.length - 1 || rows[i + 1].g.key !== g.key)) {
       sumRow(`${t('groupTotal')}${getLang() === 'en' ? ': ' : '：'}${g.name}`, groupSum, groupStart, row.number, 'FFF1F4FA');
       groupSum = 0;
       groupStart = row.number + 2; // 跳过刚插入的分组合计行
@@ -217,12 +250,9 @@ export async function buildWorkbook(data, opts) {
   ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columns.length } };
 
   const buf = await wb.xlsx.writeBuffer();
-  const d = new Date();
-  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
-  const safeName = data.project.name.replace(/[\\/:*?"<>|]/g, '_');
   return {
     blob: new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-    filename: `${safeName}-${t('sheetName')}-${stamp}.xlsx`,
+    filename: exportFileName(data, 'xlsx'),
     rowCount: rows.length,
   };
 }
