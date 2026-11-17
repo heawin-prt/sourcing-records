@@ -242,17 +242,6 @@ input.ocr-filled { background: rgba(242, 169, 0, .16); border-color: var(--star)
 .type-card .type-text { display: flex; flex-direction: column; gap: 2px; }
 .type-card b { font-size: 17px; }
 .seg.seg2 { grid-template-columns: 1fr 1fr; }
-/* 项目列表的类型标签：绝对定位在名称那一行的最右边（right 与卡片内边距相同 → 与 Delete 按钮右边对齐），
-   不占位置，所以其余版式不变；名称右侧留出空间避免与标签重叠。 */
-/* 按钮贴底、卡片最小高度 = 内边距12 + 标签行 + 间距 + 按钮34 + 内边距12，保证标签和按钮不重叠 */
-.project-row { position: relative; min-height: 84px; align-items: flex-start; }
-.project-row > .btn { align-self: flex-end; }
-.type-tag {
-  position: absolute; top: 14px; right: 12px;
-  font-size: 11px; font-weight: 600; line-height: 16px; padding: 1px 6px; border-radius: 4px;
-  color: #fff; background: var(--primary);
-}
-.type-tag.exhibition { background: #8a5cd6; }
 
 /* App 自己的确认框 */
 .dialog-mask { position: fixed; inset: 0; z-index: 120; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
