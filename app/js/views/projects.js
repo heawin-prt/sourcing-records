@@ -1,7 +1,7 @@
 // 项目列表页（需求第 1、2 条：可以有多个采购项目）。
 
 import * as db from '../db.js';
-import { t } from '../i18n.js';
+import { t, getLang } from '../i18n.js';
 import { esc, $ } from '../ui.js';
 import { projectType, projectSummary } from './project-new.js';
 
@@ -23,6 +23,7 @@ export async function renderProjects(app, _params, ctx) {
             ${projectSummary(p) ? `<span>${esc(projectSummary(p))}</span>` : ''}
             <span>${esc(t('itemsCount', { n: counts[p.id] }))}</span>
           </div>
+          ${p.purpose && projectType(p) === 'procurement' ? `<div class="meta desc">${esc(t('projectPurpose'))}${getLang() === 'en' ? ': ' : '：'}${esc(p.purpose)}</div>` : ''}
           ${p.desc ? `<div class="meta desc">${esc(p.desc)}</div>` : ''}
         </div>
         <button class="btn small" data-edit="${esc(p.id)}">${esc(t('edit'))}</button>
