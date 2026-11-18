@@ -44,7 +44,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   ctx.setTop(itemTitle(item), backPath, '', itemTitleHtml(item)); // 标题只显示物品名称（带数量）
 
   app.innerHTML = `
-    <div class="card">
+    <div class="photo-area">
       <div class="photo-grid" id="photos"></div>
       <div class="photo-btns">
         <label class="btn primary">${ICONS.camera}${esc(t('takePhoto'))}<input type="file" accept="image/*" capture="environment" id="cam" hidden></label>
@@ -52,7 +52,8 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
       </div>
     </div>
 
-    <form id="form" class="card form-compact" autocomplete="off">
+    <form id="form" class="form-compact" autocomplete="off">
+     <div class="card grp grp-a">
       <div class="name-row">
         <label class="field"><span>${esc(t('productName'))}</span>
           <input type="text" name="name" value="${esc(p.name ?? '')}"></label>
@@ -74,7 +75,9 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
       <div class="field"><span class="muted">${esc(t('rating'))}</span>
         <div class="rating" id="rating">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-r="${n}" aria-label="${n}">★</button>`).join('')}</div>
       </div>
+     </div>
 
+     <div class="card grp grp-b">
       <div class="field"><span class="muted">${esc(t('supplier'))}</span>
         <div class="row">
           <select name="supplierId" style="flex:1">
@@ -84,7 +87,11 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
           <button type="button" class="btn" id="new-sup">${esc(t('newSupplier'))}</button>
         </div>
       </div>
+      <label class="field"><span>${esc(t('marketName'))}</span><input type="text" name="marketName" value="${esc(p.marketName ?? '')}"></label>
+      <label class="field"><span>${esc(t('shopInfo'))}</span><textarea name="shopInfo" rows="1" placeholder="${esc(t('shopInfoHint'))}">${esc(p.shopInfo ?? '')}</textarea></label>
+     </div>
 
+     <div class="card grp grp-c">
       <div class="grid2">
         ${TEXT_FIELDS.map(k => `<label class="field"><span>${esc(t(k))}</span><input type="text" name="${k}" value="${esc(p[k] ?? '')}"></label>`).join('')}
         <label class="field"><span>${esc(t('leadTime'))}</span><input type="number" inputmode="numeric" name="leadTime" value="${esc(p.leadTime ?? '')}"></label>
@@ -94,6 +101,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
       <label class="field"><span>${esc(t('note'))}</span><textarea name="note" rows="1">${esc(p.note ?? '')}</textarea></label>
       <div class="field"><span>${esc(t('recordedAt'))}</span>
         ${dateField('recordedAt', toLocalInput(p.recordedAt), { time: true })}</div>
+     </div>
     </form>
 
     ${isNew ? '' : `<button class="btn danger block" id="del">${esc(t('deleteProduct'))}</button>`}
@@ -179,7 +187,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     p.priceCny = num(form.priceCny.value);
     p.qty = num(form.qty.value);
     p.leadTime = num(form.leadTime.value);
-    for (const k of ['name', 'model', ...TEXT_FIELDS, 'moq', 'note']) p[k] = form.elements[k].value.trim();
+    for (const k of ['name', 'model', 'marketName', 'shopInfo', ...TEXT_FIELDS, 'moq', 'note']) p[k] = form.elements[k].value.trim();
     p.supplierId = form.supplierId.value || null;
     p.fxCurrency = form.fxCurrency.value || null;
   }

@@ -56,6 +56,8 @@ export const COLUMNS = [
   { key: 'booth', label: () => t('booth'), group: 'product', width: 14, get: (it, p, s) => s?.booth ?? '' },
   { key: 'storeLocation', label: () => t('storeLocation'), group: 'product', width: 18, get: (it, p, s) => s?.storeLocation ?? '' },
   { key: 'address', label: () => t('address'), group: 'product', width: 24, get: (it, p, s) => s?.address ?? '' },
+  { key: 'marketName', label: () => t('marketName'), group: 'product', width: 16, get: (it, p) => p?.marketName ?? '' },
+  { key: 'shopInfo', label: () => t('shopInfo'), group: 'product', width: 20, get: (it, p) => p?.shopInfo ?? '' },
   { key: 'productName', label: () => t('colProductName'), group: 'product', width: 18, get: (it, p) => p?.name ?? '' },
   { key: 'model', label: () => t('model'), group: 'product', width: 14, get: (it, p) => p?.model ?? '' },
   { key: 'priceCny', label: () => t('priceCny'), group: 'product', width: 12, num: true, money: true, get: (it, p) => p?.priceCny ?? '' },

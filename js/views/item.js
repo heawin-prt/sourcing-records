@@ -64,6 +64,7 @@ export async function renderItem(app, { pid, iid }, ctx) {
         </div>
         <div class="muted">
           ${sup ? esc([sup.name, sup.booth, sup.phone].filter(Boolean).join(' · ')) + '<br>' : ''}
+          ${p.marketName || p.shopInfo ? esc([p.marketName, p.shopInfo].filter(Boolean).join(' · ')) + '<br>' : ''}
           ${esc([p.material, p.size, p.color, p.leadTime && `${t('leadTime')}: ${p.leadTime}`, p.moq && `${t('moq')}: ${p.moq}`].filter(Boolean).join(' · '))}
           ${p.note ? `<br>${esc(p.note)}` : ''}
           <br>${esc(fmtDateTime(p.recordedAt))}${p.createdBy ? ' · ' + esc(p.createdBy) : ''}
