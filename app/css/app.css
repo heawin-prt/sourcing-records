@@ -381,3 +381,6 @@ body.picker-open { overflow: hidden; }
 .date-text.bad { outline: 2px solid var(--danger); outline-offset: -1px; }
 .date-cal { flex: none; width: 32px; height: var(--box-h, 44px); border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
 .form-compact.box-29 textarea { line-height: 1.45; }
+/* Import list 按钮：浅黄色底 */
+.import-bar .btn { background: #fff3bf; border-color: #f0d77a; color: #3d3200; }
+@media (prefers-color-scheme: dark) { .import-bar .btn { background: #4a4120; border-color: #6b5d2a; color: #fbeeb8; } }
