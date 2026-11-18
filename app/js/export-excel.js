@@ -5,7 +5,7 @@ import { t, getLang } from './i18n.js';
 import { CATEGORIES, COMMON_FIELDS, label, categoryLabel, isBuiltinCategory } from './templates.js';
 import { fmtDateTime, itemTitle } from './ui.js';
 import { projectType } from './views/project-new.js';
-import { productFx } from './fx.js';
+import { productFx, fmtProductPrice } from './fx.js';
 
 /** 行金额 = 单价 × 数量（产品数量优先，没有则用清单数量）。 */
 export function rowQty(it, p) {
@@ -61,6 +61,7 @@ export const COLUMNS = [
   { key: 'shopInfo', label: proj => t(projectType(proj) === 'exhibition' ? 'standInfo' : 'shopInfo'), group: 'product', width: 20, get: (it, p) => p?.shopInfo ?? '' },
   { key: 'productName', label: () => t('colProductName'), group: 'product', width: 18, get: (it, p) => p?.name ?? '' },
   { key: 'model', label: () => t('model'), group: 'product', width: 14, get: (it, p) => p?.model ?? '' },
+  { key: 'priceQuoted', label: () => t('colPriceQuoted'), group: 'product', width: 14, get: (it, p) => fmtProductPrice(p) },
   { key: 'priceCny', label: () => t('priceCny'), group: 'product', width: 12, num: true, money: true, get: (it, p) => p?.priceCny ?? '' },
   { key: 'priceFx', label: () => t('colFx'), group: 'product', width: 14, get: (it, p) => productFx(p) },
   { key: 'productQty', label: () => t('colQty'), group: 'product', width: 8, num: true, get: (it, p) => rowQty(it, p) ?? '' },
@@ -81,7 +82,7 @@ export const COLUMNS = [
 ];
 
 export const DEFAULT_COLUMNS = ['category', 'itemName', 'item_room', 'productName', 'model', 'supplierName', 'phone', 'booth',
-  'priceCny', 'priceFx', 'productQty', 'amount', 'total', 'rating', 'material', 'size', 'color', 'leadTime', 'moq', 'note'];
+  'priceQuoted', 'priceCny', 'priceFx', 'productQty', 'amount', 'total', 'rating', 'material', 'size', 'color', 'leadTime', 'moq', 'note'];
 
 /** 导出时的排列/分组方式。 */
 export const GROUP_BY = ['none', 'item', 'category', 'supplier', 'product'];

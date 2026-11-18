@@ -62,8 +62,26 @@ export function fmtFx(amount, currency) {
   return `${currency} ${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-/** 产品的外币价格：优先用保存时的汇率快照。 */
+/** 产品的换算价格（右边选的币种）：优先用保存时的汇率快照。和报价币种相同时不显示。 */
 export function productFx(p) {
   if (!p || !p.fxCurrency || !p.fxRate) return '';
+  if (p.fxCurrency === productPrice(p).currency) return '';
   return fmtFx(convert(p.priceCny, p.fxRate), p.fxCurrency);
+}
+
+/** 价格可选的币种（人民币在前）。 */
+export const PRICE_CURRENCIES = ['CNY', ...FX_CURRENCIES];
+
+/** 产品的报价（原币种）：没有记录币种的旧数据按人民币。 */
+export function productPrice(p) {
+  if (!p) return { amount: null, currency: 'CNY' };
+  if (p.priceCurrency && p.priceCurrency !== 'CNY') return { amount: p.price ?? null, currency: p.priceCurrency };
+  return { amount: p.price ?? p.priceCny ?? null, currency: 'CNY' };
+}
+
+/** 报价的显示文字：人民币用 ¥，外币用 USD 12.00 */
+export function fmtProductPrice(p) {
+  const { amount, currency } = productPrice(p);
+  if (amount === null || amount === undefined || amount === '') return '';
+  return currency === 'CNY' ? '¥' + Number(amount).toLocaleString('zh-CN', { maximumFractionDigits: 2 }) : fmtFx(amount, currency);
 }

@@ -7,7 +7,7 @@ import { esc, $, $$, blobUrl, fmtMoney, fmtDateTime, stars, toast, confirmDialog
 import { FX_CURRENCIES } from '../fx.js';
 import { openPicker } from '../picker.js';
 import { loadProject } from './summary.js';
-import { productFx } from '../fx.js';
+import { productFx, fmtProductPrice, productPrice } from '../fx.js';
 
 export async function renderItem(app, { pid, iid }, ctx) {
   const data = await loadProject(pid);
@@ -55,7 +55,8 @@ export async function renderItem(app, { pid, iid }, ctx) {
         ${photoUrls[p.id].length ? `<div class="photos">${photoUrls[p.id].map(u => `<img src="${u}" alt="">`).join('')}</div>` : ''}
         ${p.name || p.model ? `<div class="product-name">${esc([p.name, p.model].filter(Boolean).join(' · '))}</div>` : ''}
         <div class="head">
-          <span class="price">${esc(fmtMoney(p.priceCny)) || '—'}</span>
+          <span class="price">${esc(fmtProductPrice(p)) || '—'}</span>
+          ${productPrice(p).currency !== 'CNY' && p.priceCny != null ? `<span class="muted">≈ ${esc(fmtMoney(p.priceCny))}</span>` : ''}
           ${productFx(p) ? `<span class="muted">≈ ${esc(productFx(p))}</span>` : ''}
           ${p.qty ? `<span class="muted">×${esc(p.qty)}</span>` : ''}
           <span class="stars">${stars(p.rating)}</span>

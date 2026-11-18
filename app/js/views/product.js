@@ -7,7 +7,7 @@ import * as db from '../db.js';
 import { t } from '../i18n.js';
 import { esc, $, $$, blobUrl, toast, toLocalInput, fromLocalInput, confirmDialog, itemTitle, itemTitleHtml, ICONS, autoGrow } from '../ui.js';
 import { processPhoto } from '../photo.js';
-import { FX_CURRENCIES, getRates, convert } from '../fx.js';
+import { PRICE_CURRENCIES, getRates, convert } from '../fx.js';
 import { dateField, bindDateFields, refreshDateField } from '../datepicker.js';
 import { projectType } from './project-new.js';
 import { openPicker } from '../picker.js';
@@ -30,8 +30,14 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   const p = draft?.product || (stored ? { ...stored } : {
     projectId: pid, itemId: iid, photoIds: [], rating: 0, chosen: false,
     qty: item.qty ?? null,
-    fxCurrency: 'USD', // 外币默认美元（2026-11-16 用户确定）
   });
+  // 两个币种都默认上一次的选择（第一次：报价人民币、换算美元）
+  if (!draft && !stored) {
+    p.priceCurrency = await db.getMeta('lastPriceCurrency', 'CNY');
+    p.fxCurrency = await db.getMeta('lastFxCurrency', 'USD');
+  }
+  // 旧数据只有人民币价格
+  if (p.price === undefined) { p.price = p.priceCny ?? null; p.priceCurrency = p.priceCurrency || 'CNY'; }
   let newPhotoIds = draft?.newPhotoIds || [];  // 本次新增、尚未随产品保存的照片
   let timeEdited = draft?.timeEdited || false; // 用户手动改过记录时间
 
@@ -64,14 +70,17 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         <label class="field"><span>${esc(t('model'))}</span>
           <input type="text" name="model" value="${esc(p.model ?? '')}"></label>
       </div>
-      <div class="field"><span class="muted">${esc(t('priceCny'))}</span>
+      <div class="field"><span class="muted">${esc(t('price'))}</span>
         <div class="price-row">
-          <input type="number" inputmode="decimal" step="0.01" name="priceCny" value="${esc(p.priceCny ?? '')}">
-          <span class="unit">¥</span>
+          <input type="number" inputmode="decimal" step="0.01" name="price" value="${esc(p.price ?? '')}">
+          <select name="priceCurrency" aria-label="${esc(t('priceCurrency'))}">
+            ${PRICE_CURRENCIES.map(c => `<option value="${c}" ${c === p.priceCurrency ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
+          <span class="unit">≈</span>
           <input type="text" id="fx-out" class="fx-box" readonly tabindex="-1" aria-label="${esc(t('colFx'))}">
           <select name="fxCurrency" aria-label="${esc(t('fxCurrency'))}">
             <option value="">—</option>
-            ${FX_CURRENCIES.map(c => `<option value="${c}" ${c === p.fxCurrency ? 'selected' : ''}>${c}</option>`).join('')}
+            ${PRICE_CURRENCIES.map(c => `<option value="${c}" ${c === p.fxCurrency ? 'selected' : ''}>${c}</option>`).join('')}
           </select>
         </div>
         <div class="muted" id="fx-note"></div>
@@ -233,7 +242,8 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   // —— 表单其余字段 ——
   const num = v => (v === '' ? null : Number(v));
   function collect() {
-    p.priceCny = num(form.priceCny.value);
+    p.price = num(form.price.value);
+    p.priceCurrency = form.priceCurrency.value || 'CNY';
     p.qty = num(form.qty.value);
     p.leadTime = num(form.leadTime.value);
     for (const k of ['name', 'model', 'marketName', 'shopInfo', ...TEXT_FIELDS, 'moq', 'note']) if (form.elements[k]) p[k] = form.elements[k].value.trim();
@@ -241,30 +251,43 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     p.fxCurrency = form.fxCurrency.value || null;
   }
 
-  // —— 外币换算 ——
+  // —— 币种换算（汇率以人民币为基准：1 元 = rate 外币）——
   // 已保存的产品若币种没变，沿用保存时的汇率快照；否则用当天汇率。
   let rates = null;
   const ratesReady = getRates().then(r => { rates = r; paintFx(); });
-  function rateFor(cur) {
+  function rateFor(cur, snapCur, snapRate, snapDate) {
     if (!cur) return null;
-    if (stored && stored.fxCurrency === cur && stored.fxRate) return { rate: stored.fxRate, date: stored.fxDate };
+    if (cur === 'CNY') return { rate: 1, date: null };
+    if (stored && stored[snapCur] === cur && stored[snapRate]) return { rate: stored[snapRate], date: stored[snapDate] };
     const r = rates?.rates?.[cur];
     return r ? { rate: r, date: rates.date } : null;
   }
+  const priceRate = () => rateFor(form.priceCurrency.value, 'priceCurrency', 'priceRate', 'priceRateDate');
+  const fxRate = () => rateFor(form.fxCurrency.value, 'fxCurrency', 'fxRate', 'fxDate');
+  /** 报价折成人民币 */
+  function cnyOf() {
+    const price = num(form.price.value);
+    const r = priceRate();
+    return price === null || !r ? null : Math.round(price / r.rate * 100) / 100;
+  }
   function paintFx() {
-    const cur = form.fxCurrency.value;
     const out = $('#fx-out');
-    const fx = rateFor(cur);
-    const price = num(form.priceCny.value);
-    out.value = fx && price !== null ? convert(price, fx.rate).toFixed(2) : '';
-    $('#fx-note').textContent = cur && !fx ? t('fxUnavailable') : '';
+    const cur = form.fxCurrency.value;
+    const fx = fxRate();
+    const price = num(form.price.value);
+    const cny = cnyOf();
+    // 两边币种相同：直接等于报价
+    out.value = !cur || price === null ? '' : cur === form.priceCurrency.value ? price.toFixed(2) : fx && cny !== null ? convert(cny, fx.rate).toFixed(2) : '';
+    const missing = (form.priceCurrency.value && !priceRate()) || (cur && !fx);
+    $('#fx-note').textContent = missing ? t('fxUnavailable') : '';
   }
   form.fxCurrency.onchange = () => { paintFx(); saveDraft(); };
+  form.priceCurrency.onchange = () => { paintFx(); saveDraft(); };
   paintFx();
 
   form.oninput = e => {
     if (e.target.name === 'recordedAt') return;
-    if (e.target.name === 'priceCny') paintFx();
+    if (e.target.name === 'price') paintFx();
     collect();
     // 没有照片时，第一次录入文字的时间就是记录时间
     if (!p.recordedAt && !timeEdited) setTime(new Date().toISOString());
@@ -292,10 +315,17 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   $('#save').onclick = async () => {
     collect();
     if (!p.recordedAt) p.recordedAt = new Date().toISOString();
-    if (p.fxCurrency) await ratesReady;
-    const fx = rateFor(p.fxCurrency);
+    await ratesReady;
+    const pr = priceRate();
+    p.priceRate = pr ? pr.rate : null;
+    p.priceRateDate = pr ? pr.date : null;
+    p.priceCny = cnyOf(); // 小计、合计都按人民币计算
+    const fx = fxRate();
     p.fxRate = fx ? fx.rate : null;
     p.fxDate = fx ? fx.date : null;
+    // 记住这次选的两个币种，下次新建产品默认用它们
+    await db.setMeta('lastPriceCurrency', p.priceCurrency);
+    await db.setMeta('lastFxCurrency', p.fxCurrency || '');
     await db.put('products', p);
     // 编辑时删掉的旧照片，保存后才真正删除
     if (stored) {

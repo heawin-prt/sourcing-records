@@ -3,7 +3,7 @@
 import * as db from '../db.js';
 import { t } from '../i18n.js';
 import { esc, $, blobUrl, releaseUrls, fmtMoney, stars, toast, itemTitleHtml } from '../ui.js';
-import { productFx } from '../fx.js';
+import { productFx, fmtProductPrice } from '../fx.js';
 import { loadProject } from './summary.js';
 import { viewSwitch, supplierOptions } from './overview.js';
 import { openPicker } from '../picker.js';
@@ -60,9 +60,9 @@ export async function renderProducts(app, { pid }, ctx) {
           <div class="list-item prod-row ${p.chosen ? 'chosen' : ''}" data-open="${esc(it.id)}/${esc(p.id)}">
             ${thumbs[p.id] ? `<img class="thumb" src="${thumbs[p.id]}" alt="">` : `<div class="thumb ph">📷</div>`}
             <div class="main">
-              <div class="name">${esc(p.name || fmtMoney(p.priceCny) || '—')}</div>
+              <div class="name">${esc(p.name || fmtProductPrice(p) || '—')}</div>
               <div class="meta">
-                ${p.name && p.priceCny != null ? `<span>${esc(fmtMoney(p.priceCny))}</span>` : ''}
+                ${p.name && fmtProductPrice(p) ? `<span>${esc(fmtProductPrice(p))}</span>` : ''}
                 ${productFx(p) ? `<span>≈ ${esc(productFx(p))}</span>` : ''}
                 ${p.qty ? `<span>×${esc(p.qty)}</span>` : ''}
                 ${p.rating ? `<span class="stars">${stars(p.rating)}</span>` : ''}
