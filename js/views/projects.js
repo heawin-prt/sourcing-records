@@ -37,20 +37,17 @@ export async function renderProjects(app, _params, ctx) {
     <div class="row section-row"><div class="section-title">${esc(t('projectsHeading'))}</div><span class="spacer"></span>
       ${all.length > 1 || typeFilter ? `<button type="button" class="btn small" id="sort">${esc(t('sortBy'))}: ${esc(t('sort_' + sort))} ▾</button>` : ''}</div>
     ${projects.length ? projects.map(p => `
-      <div class="list-item proj-item" data-open="${esc(p.id)}">
-        <!-- 第一行占满整行：名称在左、日期在最右（与 Delete 右对齐），名称能显示得更多 -->
-        <div class="name name-date"><span class="nm">${esc(p.name)}</span>${projectDates(p) ? `<span class="dt">${esc(projectDates(p, { short: true }))}</span>` : ''}</div>
-        <div class="proj-body">
-          <div class="main">
-            <div class="meta">
-              ${projectSummary(p, { date: false }) ? `<span>${esc(projectSummary(p, { date: false }))}</span>` : ''}
-              <span>${esc(t('itemsCount', { n: counts[p.id] }))}</span>
-            </div>
-            ${p.desc ? `<div class="meta desc">${esc(p.desc)}</div>` : ''}
+      <div class="list-item" data-open="${esc(p.id)}">
+        <div class="main">
+          <div class="name name-date"><span class="nm">${esc(p.name)}</span>${projectDates(p) ? `<span class="dt">${esc(projectDates(p, { short: true }))}</span>` : ''}</div>
+          <div class="meta">
+            ${projectSummary(p, { date: false }) ? `<span>${esc(projectSummary(p, { date: false }))}</span>` : ''}
+            <span>${esc(t('itemsCount', { n: counts[p.id] }))}</span>
           </div>
-          <button class="btn small" data-edit="${esc(p.id)}">${esc(t('edit'))}</button>
-          <button class="btn small danger" data-del="${esc(p.id)}">${esc(t('delete'))}</button>
+          ${p.desc ? `<div class="meta desc">${esc(p.desc)}</div>` : ''}
         </div>
+        <button class="btn small" data-edit="${esc(p.id)}">${esc(t('edit'))}</button>
+        <button class="btn small danger" data-del="${esc(p.id)}">${esc(t('delete'))}</button>
       </div>`).join('') : `<p class="empty">${esc(typeFilter ? t('noProjectsOfType', { type: t('ptype_' + typeFilter) }) : t('noProjects'))}</p>`}
     <button class="btn primary fab" id="new-project">+ ${esc(t('newProject'))}</button>
   `;
