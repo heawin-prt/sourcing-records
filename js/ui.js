@@ -67,14 +67,15 @@ export function getDateOrder() { return dateOrder; }
 
 /** 输入框的格式提示，如 YYYY-MM-DD / DD/MM/YYYY */
 export function datePlaceholder(order = dateOrder) {
-  return { ymd: 'YYYY-MM-DD', dmy: 'DD/MM/YYYY', mdy: 'MM/DD/YYYY' }[order];
+  return { ymd: 'YY-MM-DD', dmy: 'DD/MM/YY', mdy: 'MM/DD/YY' }[order];
 }
 
 /** 'YYYY-MM-DD'（或更长的 ISO）→ 按设置的顺序显示 */
 export function fmtDate(v, order = dateOrder) {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v || '');
   if (!m) return v || '';
-  const [, y, mo, d] = m;
+  const [, yyyy, mo, d] = m;
+  const y = yyyy.slice(2); // 两位年份（2026 → 26）
   return order === 'dmy' ? `${d}/${mo}/${y}` : order === 'mdy' ? `${mo}/${d}/${y}` : `${y}-${mo}-${d}`;
 }
 
@@ -84,27 +85,32 @@ export function fmtDateRange(a, b, short = false) {
   if (!a) return fmtDate(b);
   if (short && a.slice(0, 4) === b.slice(0, 4)) {
     if (dateOrder === 'ymd') return `${fmtDate(a)} – ${b.slice(5, 10)}`;
-    const noYear = v => fmtDate(v).replace(/\/\d{4}$/, '');
+    const noYear = v => fmtDate(v).replace(/\/\d{2}$/, '');
     return `${noYear(a)} – ${fmtDate(b)}`;
   }
   return `${fmtDate(a)} – ${fmtDate(b)}`;
 }
 
-/** 手动输入的日期 → 'YYYY-MM-DD'；空串返回 ''；认不出返回 null。四位数开头的一律按 年-月-日。 */
+/**
+ * 手动输入的日期 → 'YYYY-MM-DD'；空串返回 ''；认不出返回 null。
+ * 四位数开头的一律按 年-月-日；其余按设置的顺序，年份可写两位（26 = 2026）或四位。
+ */
 export function parseDateText(s, order = dateOrder) {
   s = String(s || '').trim();
   if (!s) return '';
   let y, mo, d, m;
   if ((m = s.match(/^(\d{4})\s*[-/.年]\s*(\d{1,2})\s*[-/.月]\s*(\d{1,2})\s*日?$/))) [, y, mo, d] = m;
-  else if ((m = s.match(/^(\d{1,2})\s*[-/. ]\s*(\d{1,2})\s*[-/. ]\s*(\d{4})$/))) {
-    if (order === 'mdy') [, mo, d, y] = m; else [, d, mo, y] = m;
-  } else if ((m = s.match(/^(\d{8})$/))) {
-    const t = m[1];
+  else if ((m = s.match(/^(\d{1,2})\s*[-/. ]\s*(\d{1,2})\s*[-/. ]\s*(\d{2}|\d{4})$/))) {
+    if (order === 'ymd') { if (m[3].length !== 2) return null; [, y, mo, d] = m; } // 26-11-20
+    else if (order === 'mdy') [, mo, d, y] = m;
+    else [, d, mo, y] = m;
+  } else if ((m = s.match(/^(\d{8}|\d{6})$/))) {
+    const t = m[1], yl = t.length - 4; // 年份长度：4 或 2
     if (order === 'dmy') [d, mo, y] = [t.slice(0, 2), t.slice(2, 4), t.slice(4)];
     else if (order === 'mdy') [mo, d, y] = [t.slice(0, 2), t.slice(2, 4), t.slice(4)];
-    else [y, mo, d] = [t.slice(0, 4), t.slice(4, 6), t.slice(6)];
+    else [y, mo, d] = [t.slice(0, yl), t.slice(yl, yl + 2), t.slice(yl + 2)];
   } else return null;
-  y = +y; mo = +mo; d = +d;
+  y = String(y).length === 2 ? 2000 + +y : +y; mo = +mo; d = +d;
   const dt = new Date(y, mo - 1, d);
   if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
   return `${y}-${pad(mo)}-${pad(d)}`;
