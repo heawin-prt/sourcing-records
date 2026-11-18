@@ -148,11 +148,12 @@ details > summary { cursor: pointer; color: var(--primary); padding: 6px 0; font
 
 /* 价格 + 外币换算 */
 /* 人民币框与外币框同宽（原 34% 再缩短 20% ≈ 27%），单位在框外右侧 */
-.price-row { display: flex; gap: 6px; align-items: center; }
-.price-row input { flex: 0 0 27%; min-width: 0; }
-.price-row .unit { color: var(--muted); margin-right: 6px; }
+/* R8：价格 [币种▾] ≈ 换算 [币种▾] */
+.price-row { display: flex; gap: 4px; align-items: center; }
+.price-row input { flex: 1 1 0; min-width: 0; }
+.price-row .unit { color: var(--muted); flex: none; }
 .price-row .fx-box { background: transparent; color: var(--muted); }
-.price-row select { flex: 0 0 auto; width: auto; padding-right: 4px; }
+.price-row select { flex: 0 0 auto; width: auto; padding: 2px 2px 2px 6px !important; }
 .qty-field input { width: 34%; }
 
 .progress { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--line); margin: 6px 0 10px; }
@@ -389,3 +390,5 @@ body.picker-open { overflow: hidden; }
 .list-item .name-date { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .name-date .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 3em; }
 .name-date .dt { flex: none; font-size: 13px; font-weight: 400; color: var(--muted); white-space: nowrap; }
+/* 币种下拉的字体与字段标题（如 Price）一致 */
+.form-compact .price-row select { font-size: 13px; font-family: inherit; }
