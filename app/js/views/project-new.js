@@ -4,7 +4,7 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, $$, toast, ICONS, autoGrow } from '../ui.js';
+import { esc, $, $$, toast, ICONS, autoGrow, fmtDate, fmtDateRange } from '../ui.js';
 import { dateField, bindDateFields } from '../datepicker.js';
 import { categoryLabel } from '../templates.js';
 import { getLang } from '../i18n.js';
@@ -24,15 +24,13 @@ export function projectSummary(p, { date = true } = {}) {
     const exName = p.exName && p.exName !== p.name ? `🏛 ${p.exName}` : ''; // 名称就是展会名称时不重复
     return [exName, [p.city, p.venue].filter(Boolean).join(' · '), date && projectDates(p)].filter(Boolean).join(' · ');
   }
-  return [p.location, date && p.date].filter(Boolean).join(' · ');
+  return [p.location, date && fmtDate(p.date)].filter(Boolean).join(' · ');
 }
 
 /** 项目日期：展会有结束日期时显示起止。 */
 export function projectDates(p, { short = false } = {}) {
-  if (!(projectType(p) === 'exhibition' && p.dateEnd && p.dateEnd !== p.date)) return p.date || '';
-  // short：同一年的结束日期省略年份（2026-10-15 – 10-19）
-  const end = short && p.date && p.date.slice(0, 5) === p.dateEnd.slice(0, 5) ? p.dateEnd.slice(5) : p.dateEnd;
-  return `${p.date || ''} – ${end}`;
+  if (projectType(p) !== 'exhibition') return fmtDate(p.date);
+  return fmtDateRange(p.date, p.dateEnd, short); // short：同一年时省一个年份
 }
 
 export async function renderProjectNew(app, { pid }, ctx, query = {}) {

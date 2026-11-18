@@ -59,16 +59,73 @@ export function releaseUrls() {
 const pad = n => String(n).padStart(2, '0');
 
 /** ISO → "2026-11-16 14:05"（本地时间） */
-export function fmtDateTime(iso) {
+// —— 日期显示格式（设置里选择）：ymd 2026-11-20 / dmy 20/11/2026 / mdy 11/20/2026。数据里始终存 YYYY-MM-DD。——
+export const DATE_ORDERS = ['ymd', 'dmy', 'mdy'];
+let dateOrder = 'ymd';
+export function setDateOrder(o) { dateOrder = DATE_ORDERS.includes(o) ? o : 'ymd'; }
+export function getDateOrder() { return dateOrder; }
+
+/** 输入框的格式提示，如 YYYY-MM-DD / DD/MM/YYYY */
+export function datePlaceholder(order = dateOrder) {
+  return { ymd: 'YYYY-MM-DD', dmy: 'DD/MM/YYYY', mdy: 'MM/DD/YYYY' }[order];
+}
+
+/** 'YYYY-MM-DD'（或更长的 ISO）→ 按设置的顺序显示 */
+export function fmtDate(v, order = dateOrder) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v || '');
+  if (!m) return v || '';
+  const [, y, mo, d] = m;
+  return order === 'dmy' ? `${d}/${mo}/${y}` : order === 'mdy' ? `${mo}/${d}/${y}` : `${y}-${mo}-${d}`;
+}
+
+/** 起止日期；short=true 且同一年时省掉一个年份 */
+export function fmtDateRange(a, b, short = false) {
+  if (!b || b === a) return fmtDate(a);
+  if (!a) return fmtDate(b);
+  if (short && a.slice(0, 4) === b.slice(0, 4)) {
+    if (dateOrder === 'ymd') return `${fmtDate(a)} – ${b.slice(5, 10)}`;
+    const noYear = v => fmtDate(v).replace(/\/\d{4}$/, '');
+    return `${noYear(a)} – ${fmtDate(b)}`;
+  }
+  return `${fmtDate(a)} – ${fmtDate(b)}`;
+}
+
+/** 手动输入的日期 → 'YYYY-MM-DD'；空串返回 ''；认不出返回 null。四位数开头的一律按 年-月-日。 */
+export function parseDateText(s, order = dateOrder) {
+  s = String(s || '').trim();
+  if (!s) return '';
+  let y, mo, d, m;
+  if ((m = s.match(/^(\d{4})\s*[-/.年]\s*(\d{1,2})\s*[-/.月]\s*(\d{1,2})\s*日?$/))) [, y, mo, d] = m;
+  else if ((m = s.match(/^(\d{1,2})\s*[-/. ]\s*(\d{1,2})\s*[-/. ]\s*(\d{4})$/))) {
+    if (order === 'mdy') [, mo, d, y] = m; else [, d, mo, y] = m;
+  } else if ((m = s.match(/^(\d{8})$/))) {
+    const t = m[1];
+    if (order === 'dmy') [d, mo, y] = [t.slice(0, 2), t.slice(2, 4), t.slice(4)];
+    else if (order === 'mdy') [mo, d, y] = [t.slice(0, 2), t.slice(2, 4), t.slice(4)];
+    else [y, mo, d] = [t.slice(0, 4), t.slice(4, 6), t.slice(6)];
+  } else return null;
+  y = +y; mo = +mo; d = +d;
+  const dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+  return `${y}-${pad(mo)}-${pad(d)}`;
+}
+
+function isoLocal(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d)) return '';
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** 日期时间：按设置的日期顺序 + 时:分 */
+export function fmtDateTime(iso) {
+  const v = isoLocal(iso);
+  return v ? `${fmtDate(v)} ${v.slice(11)}` : '';
 }
 
 /** ISO → datetime-local 输入框的值 */
 export function toLocalInput(iso) {
-  return fmtDateTime(iso).replace(' ', 'T');
+  return isoLocal(iso);
 }
 
 export function fromLocalInput(v) {

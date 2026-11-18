@@ -2,7 +2,7 @@
 
 import * as db from './db.js';
 import { initLang, t } from './i18n.js';
-import { $, releaseUrls } from './ui.js';
+import { $, releaseUrls, setDateOrder } from './ui.js';
 import { renderProjects } from './views/projects.js';
 import { renderOverview } from './views/overview.js';
 import { renderItem, renderItemForm } from './views/item.js';
@@ -83,6 +83,7 @@ async function route() {
 
 async function init() {
   initLang(await db.getMeta('lang'));
+  setDateOrder(await db.getMeta('dateOrder', 'ymd'));
   db.setCurrentUser(await db.getMeta('nickname', ''));
   await importBundledProjects();
   // 正式网址（https）上启用 Service Worker：保证拿到最新版本，断网也能打开
