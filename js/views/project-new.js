@@ -15,13 +15,13 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-/** 项目信息的一行摘要（项目列表、项目页顶部共用）。pin=false 时地点前不加图钉图标（开始页面用）。 */
-export function projectSummary(p, { pin = true } = {}) {
+/** 项目信息的一行摘要（项目列表、项目页顶部共用）。地点前不加图钉图标（C51）。 */
+export function projectSummary(p) {
   if (projectType(p) === 'exhibition') {
     const dates = p.dateEnd && p.dateEnd !== p.date ? `${p.date || ''} – ${p.dateEnd}` : p.date;
     return [p.exName && `🏛 ${p.exName}`, [p.city, p.venue].filter(Boolean).join(' · '), dates].filter(Boolean).join(' · ');
   }
-  return [p.location && (pin ? `📍${p.location}` : p.location), p.date].filter(Boolean).join(' · ');
+  return [p.location, p.date].filter(Boolean).join(' · ');
 }
 
 export async function renderProjectNew(app, { pid }, ctx, query = {}) {

@@ -112,7 +112,7 @@ export async function buildDocx(data, opts) {
 
   // 标题与项目信息
   const p = data.project;
-  const info = [projectSummary(p, { pin: false }), p.desc].filter(Boolean);
+  const info = [projectSummary(p), p.desc].filter(Boolean);
   const intro = [
     new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun({ text: p.name })] }),
     ...info.map(line => new Paragraph({ children: [new TextRun({ text: line, color: '555555' })] })),
