@@ -154,6 +154,7 @@ export async function purgeProject(projectId) {
 export async function removeItem(item) {
   const products = (await listByProject('products', item.projectId)).filter(p => p.itemId === item.id);
   for (const p of products) await removeProduct(p);
+  for (const id of item.photoIds || []) await remove('photos', id);
   await remove('items', item.id);
 }
 

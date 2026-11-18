@@ -2,7 +2,7 @@
 
 import * as db from '../db.js';
 import { t, getLang, setLang } from '../i18n.js';
-import { esc, $, fmtBytes, toast, DATE_ORDERS, getDateOrder, setDateOrder, fmtDate } from '../ui.js';
+import { esc, $, fmtBytes, toast, DATE_ORDERS, getDateOrder, setDateOrder, fmtDate, PHOTO_SIZES, getPhotoSize, setPhotoSize } from '../ui.js';
 import { VERSION } from '../version.js';
 import { getRates } from '../fx.js';
 
@@ -21,6 +21,9 @@ export async function renderSettings(app, params, ctx) {
         <select id="date-order">
           ${DATE_ORDERS.map(o => `<option value="${o}" ${getDateOrder() === o ? 'selected' : ''}>${esc(t('dateOrder_' + o))} — ${fmtDate('2026-11-20', o)}</option>`).join('')}
         </select></label>
+      <div class="field"><span>${esc(t('photoSize'))}</span>
+        <div class="seg seg3" id="photo-size">${PHOTO_SIZES.map(v => `<button type="button" data-ps="${v}" class="${getPhotoSize() === v ? 'on st-done' : ''}">${esc(t('photoSize_' + v))}</button>`).join('')}</div>
+      </div>
       <label class="field"><span>${esc(t('nickname'))}</span>
         <input type="text" id="nick" value="${esc(nickname)}" maxlength="20">
         <span class="muted">${esc(t('nicknameHint'))}</span></label>
@@ -42,6 +45,14 @@ export async function renderSettings(app, params, ctx) {
     setLang(e.target.value);
     await db.setMeta('lang', e.target.value);
     renderSettings(app, params, ctx);
+  };
+  $('#photo-size').onclick = async e => {
+    const b = e.target.closest('[data-ps]');
+    if (!b) return;
+    setPhotoSize(b.dataset.ps);
+    await db.setMeta('photoSize', b.dataset.ps);
+    document.querySelectorAll('#photo-size button').forEach(x => { x.className = x === b ? 'on st-done' : ''; });
+    toast(t('saved'));
   };
   $('#date-order').onchange = async e => {
     setDateOrder(e.target.value);

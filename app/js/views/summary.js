@@ -31,5 +31,5 @@ export function coverPhotoId(item) {
   const p = item._chosen[0] || item._best;
   if (p && p.photoIds && p.photoIds.length) return p.photoIds[0];
   for (const q of item._products) if (q.photoIds && q.photoIds.length) return q.photoIds[0];
-  return null;
+  return item.photoIds?.[0] || null; // 没有产品照片时用物品自己的图片
 }

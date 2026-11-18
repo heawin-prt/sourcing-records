@@ -425,3 +425,18 @@ body.picker-open { overflow: hidden; }
 .project-info .pi-edit { display: inline-flex; align-items: center; }
 .project-info .pi-edit .icon { width: 18px; height: 18px; }
 .product-actions .btn.icon-btn-sm { width: 32px; padding: 0; }
+
+/* 设置里的图片大小（记录产品页的照片）：大 = 原来的大小，中 = 2/3，小 = 1/2 */
+:root { --ph: 1; }
+:root[data-photo="m"] { --ph: 0.6667; }
+:root[data-photo="s"] { --ph: 0.5; }
+#photos.photo-grid { grid-template-columns: repeat(auto-fill, minmax(calc(88px * var(--ph)), calc(100px * var(--ph)))); }
+#shop-photos.photo-grid, #market-photos.photo-grid { grid-template-columns: repeat(auto-fill, minmax(calc(64px * var(--ph)), calc(72px * var(--ph)))); }
+:root[data-photo="s"] :is(#photos, #shop-photos, #market-photos) .del { width: 20px; height: 20px; font-size: 11px; top: 2px; right: 2px; }
+.seg.seg3 { display: grid; grid-template-columns: repeat(3, 1fr); }
+:root[data-photo="m"] :is(#photos, #shop-photos, #market-photos) .del { width: 22px; height: 22px; font-size: 12px; top: 3px; right: 3px; }
+
+/* 物品图片：物品页"清单信息"里的缩略图；编辑页与记录产品页同样的照片区（随设置的图片大小） */
+.item-photos { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 8px; }
+.item-photos img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; flex: none; }
+#item-photos.photo-grid { grid-template-columns: repeat(auto-fill, minmax(calc(88px * var(--ph)), calc(100px * var(--ph)))); }

@@ -2,7 +2,7 @@
 
 import * as db from './db.js';
 import { initLang, t } from './i18n.js';
-import { $, releaseUrls, setDateOrder } from './ui.js';
+import { $, releaseUrls, setDateOrder, setPhotoSize } from './ui.js';
 import { renderProjects } from './views/projects.js';
 import { renderOverview } from './views/overview.js';
 import { renderItem, renderItemForm } from './views/item.js';
@@ -88,6 +88,7 @@ async function init() {
   // 申请持久存储：浏览器空间紧张时也不会自动清掉本 App 的数据
   try { if (navigator.storage?.persist && !(await navigator.storage.persisted())) navigator.storage.persist(); } catch { /* 不支持则忽略 */ }
   setDateOrder(await db.getMeta('dateOrder', 'ymd'));
+  setPhotoSize(await db.getMeta('photoSize', 'l'));
   db.setCurrentUser(await db.getMeta('nickname', ''));
   await importBundledProjects();
   // 正式网址（https）上启用 Service Worker：保证拿到最新版本，断网也能打开
