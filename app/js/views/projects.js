@@ -33,7 +33,7 @@ export async function renderProjects(app, _params, ctx) {
 
   app.innerHTML = `
     <div class="row section-row"><div class="section-title">${esc(t('projectsHeading'))}</div><span class="spacer"></span>
-      ${projects.length > 1 ? `<button type="button" class="btn small" id="sort">${esc(t('sortBy'))}: ${esc(sort.startsWith('date') ? t('sortShort_' + sort) : t('sort_' + sort))} ▾</button>` : ''}</div>
+      ${projects.length > 1 ? `<button type="button" class="btn small" id="sort">${esc(t('sortBy'))}: ${esc(t('sort_' + sort))} ▾</button>` : ''}</div>
     ${projects.length ? projects.map(p => `
       <div class="list-item" data-open="${esc(p.id)}">
         <div class="main">
