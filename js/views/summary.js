@@ -26,7 +26,14 @@ export async function loadProject(projectId) {
   return { project, items, products, suppliers, supplierMap };
 }
 
-/** 项目开始页物品左边的图片：只用物品自带的图片；没有就返回 null（显示默认图标）。 */
+/**
+ * 项目开始页物品左边的图片：先用物品自带的图片；没有就用产品照片（已选定的、评分最高的优先）；
+ * 都没有返回 null（显示默认图标）。
+ */
 export function coverPhotoId(item) {
-  return item.photoIds?.[0] || null;
+  if (item.photoIds?.length) return item.photoIds[0];
+  const p = item._chosen[0] || item._best;
+  if (p && p.photoIds && p.photoIds.length) return p.photoIds[0];
+  for (const q of item._products) if (q.photoIds && q.photoIds.length) return q.photoIds[0];
+  return null;
 }
