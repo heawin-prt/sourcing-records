@@ -2,7 +2,7 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, confirmDialog } from '../ui.js';
+import { esc, $, confirmDialog, ICONS } from '../ui.js';
 import { projectSummary, projectDates, projectType } from './project-new.js';
 import { openPicker } from '../picker.js';
 
@@ -21,13 +21,14 @@ const SORT_FN = {
 };
 
 export async function renderProjects(app, _params, ctx) {
-  ctx.setTop(t('appName'), null, `<button class="top-btn" id="go-settings">${esc(t('settings'))}</button>`);
+  ctx.setTop(t('appName'), null, `<button class="top-btn icon-only" id="go-settings" title="${esc(t('settings'))}" aria-label="${esc(t('settings'))}">${ICONS.settings}</button>`);
   $('#go-settings').onclick = () => ctx.nav('/settings');
 
   let sort = await db.getMeta('projectSort', 'date');
   if (sort === 'type') sort = 'procurement'; // 旧设置
   if (!SORTS.includes(sort)) sort = 'date';
   const all = await db.listProjects();
+  const trashCount = (await db.listDeletedProjects()).length;
   const typeFilter = sort === 'procurement' || sort === 'exhibition' ? sort : null;
   const projects = all.filter(p => !typeFilter || projectType(p) === typeFilter).sort(SORT_FN[sort]);
   const counts = {};
@@ -46,13 +47,15 @@ export async function renderProjects(app, _params, ctx) {
           </div>
           ${p.desc ? `<div class="meta desc">${esc(p.desc)}</div>` : ''}
         </div>
-        <button class="btn small" data-edit="${esc(p.id)}">${esc(t('edit'))}</button>
-        <button class="btn small danger" data-del="${esc(p.id)}">${esc(t('delete'))}</button>
+        <button class="btn small icon-btn-sm" data-edit="${esc(p.id)}" title="${esc(t('edit'))}" aria-label="${esc(t('edit'))}">${ICONS.edit}</button>
+        <button class="btn small danger icon-btn-sm" data-del="${esc(p.id)}" title="${esc(t('delete'))}" aria-label="${esc(t('delete'))}">${ICONS.trash}</button>
       </div>`).join('') : `<p class="empty">${esc(typeFilter ? t('noProjectsOfType', { type: t('ptype_' + typeFilter) }) : t('noProjects'))}</p>`}
+    <button class="btn fab fab-left trash-fab" id="go-trash" title="${esc(t('trash'))}" aria-label="${esc(t('trash'))}">${ICONS.trash}${trashCount ? `<span class="badge">${trashCount}</span>` : ''}</button>
     <button class="btn primary fab" id="new-project">+ ${esc(t('newProject'))}</button>
   `;
 
   $('#new-project').onclick = () => ctx.nav('/new');
+  $('#go-trash').onclick = () => ctx.nav('/trash');
   const sortBtn = $('#sort');
   if (sortBtn) sortBtn.onclick = e => {
     e.stopPropagation();

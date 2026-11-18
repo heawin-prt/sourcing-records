@@ -33,6 +33,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   // 两个币种都默认上一次的选择（第一次：报价人民币、换算美元）
   if (!draft && !stored) {
     p.priceCurrency = await db.getMeta('lastPriceCurrency', 'CNY');
+    p.supplierId = await db.getMeta('lastSupplier:' + pid, null); // 供应商默认为本项目上一条记录所选的
     p.fxCurrency = await db.getMeta('lastFxCurrency', 'USD');
   }
   // 旧数据只有人民币价格
@@ -322,6 +323,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     p.fxDate = fx ? fx.date : null;
     // 记住这次选的两个币种，下次新建产品默认用它们
     await db.setMeta('lastPriceCurrency', p.priceCurrency);
+    await db.setMeta('lastSupplier:' + pid, p.supplierId || null);
     await db.setMeta('lastFxCurrency', p.fxCurrency || '');
     await db.put('products', p);
     // 编辑时删掉的旧照片，保存后才真正删除
