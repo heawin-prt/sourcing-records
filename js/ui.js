@@ -91,6 +91,13 @@ const pad = n => String(n).padStart(2, '0');
 
 /** ISO → "2026-11-16 14:05"（本地时间） */
 // —— 日期显示格式（设置里选择）：ymd 2026-11-20 / dmy 20/11/2026 / mdy 11/20/2026。数据里始终存 YYYY-MM-DD。——
+// —— 记录产品页照片的显示大小（设置里选择）：l 大（原来的大小）/ m 中（2/3）/ s 小（1/2）——
+export const PHOTO_SIZES = ['l', 'm', 's'];
+export function setPhotoSize(v) {
+  document.documentElement.dataset.photo = PHOTO_SIZES.includes(v) ? v : 'l';
+}
+export function getPhotoSize() { return document.documentElement.dataset.photo || 'l'; }
+
 export const DATE_ORDERS = ['ymd', 'dmy', 'mdy'];
 let dateOrder = 'ymd';
 export function setDateOrder(o) { dateOrder = DATE_ORDERS.includes(o) ? o : 'ymd'; }

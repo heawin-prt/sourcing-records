@@ -8,6 +8,7 @@ import { FX_CURRENCIES } from '../fx.js';
 import { openPicker } from '../picker.js';
 import { loadProject } from './summary.js';
 import { productFx, fmtProductPrice, productPrice } from '../fx.js';
+import { processPhoto } from '../photo.js';
 
 export async function renderItem(app, { pid, iid }, ctx) {
   const data = await loadProject(pid);
@@ -20,6 +21,11 @@ export async function renderItem(app, { pid, iid }, ctx) {
   $('#edit-item').onclick = () => ctx.nav(`/p/${pid}/item/${iid}/edit`);
 
   const fields = fieldsFor(item.category).filter(fd => item.fields?.[fd.key]);
+  const itemPhotoUrls = [];
+  for (const phId of item.photoIds || []) {
+    const ph = await db.get('photos', phId);
+    if (ph) itemPhotoUrls.push(blobUrl(ph.thumb));
+  }
   const photoUrls = {};
   for (const p of item._products) {
     photoUrls[p.id] = [];
@@ -39,6 +45,7 @@ export async function renderItem(app, { pid, iid }, ctx) {
 
     <div class="card">
       <h2>${esc(t('listInfo'))}</h2>
+      ${itemPhotoUrls.length ? `<div class="item-photos">${itemPhotoUrls.map(u => `<img src="${u}" alt="">`).join('')}</div>` : ''}
       <dl class="kv">
         <dt>${esc(t('category'))}</dt><dd>${esc(categoryLabel(item.category, lang))}</dd>
         ${item.qty ? `<dt>${esc(t('qty'))}</dt><dd>${esc(item.qty)}</dd>` : ''}
@@ -130,6 +137,13 @@ export async function renderItemForm(app, { pid, iid }, ctx) {
   }).join('');
 
   app.innerHTML = `
+    <div class="photo-area">
+      <div class="photo-grid" id="item-photos"></div>
+      <div class="photo-btns">
+        <label class="btn primary">${ICONS.camera}${esc(t('takePhoto'))}<input type="file" accept="image/*" capture="environment" id="cam" hidden></label>
+        <label class="btn">${ICONS.album}${esc(t('fromAlbum'))}<input type="file" accept="image/*" multiple id="album" hidden></label>
+      </div>
+    </div>
     <form id="form" class="card" autocomplete="off">
       <label class="field"><span>${esc(t('itemName'))} *</span><input type="text" name="name" value="${esc(item.name ?? '')}" required></label>
       <div class="grid2">
@@ -150,6 +164,42 @@ export async function renderItemForm(app, { pid, iid }, ctx) {
   `;
 
   const form = $('#form');
+
+  // —— 物品图片（参考图，如客户清单里的样式图）——
+  const storedPhotoIds = [...(item.photoIds || [])];
+  item.photoIds = [...storedPhotoIds];
+  let newPhotoIds = [];
+  async function renderPhotos() {
+    const html = [];
+    for (const id of item.photoIds) {
+      const ph = await db.get('photos', id);
+      if (ph) html.push(`<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" alt=""><button type="button" class="del" data-del-photo="${esc(id)}">✕</button></div>`);
+    }
+    $('#item-photos').innerHTML = html.join('');
+  }
+  async function addFiles(files) {
+    for (const file of files) {
+      toast(t('processingPhoto'));
+      const { blob, thumb, takenAt } = await processPhoto(file);
+      const ph = await db.put('photos', { projectId: pid, blob, thumb, takenAt });
+      item.photoIds.push(ph.id);
+      newPhotoIds.push(ph.id);
+    }
+    renderPhotos();
+  }
+  $('#cam').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
+  $('#album').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
+  $('#item-photos').onclick = async e => {
+    const b = e.target.closest('[data-del-photo]');
+    if (!b || !await confirmDialog(t('deletePhoto'))) return;
+    const id = b.dataset.delPhoto;
+    item.photoIds = item.photoIds.filter(x => x !== id);
+    // 新加的照片立即删除；原有照片等保存时再删除
+    if (newPhotoIds.includes(id)) { newPhotoIds = newPhotoIds.filter(x => x !== id); await db.remove('photos', id); }
+    renderPhotos();
+  };
+  renderPhotos();
+
   // 品类：可从列表选（内置品类 + 本项目用过的自定义品类），也可直接输入。切换品类时保留已填的值。
   const used = (await db.listByProject('items', pid)).map(i => i.category).filter(c => c && !isBuiltinCategory(c));
   const catOptions = [...CATEGORIES.map(c => label(c, lang)), ...new Set(used)];
@@ -188,6 +238,7 @@ export async function renderItemForm(app, { pid, iid }, ctx) {
     if (!item.name) { toast(t('required', { field: t('itemName') })); form.name.focus(); return; }
     if (isNew) item.order = Date.now();
     const saved = await db.put('items', item);
+    for (const id of storedPhotoIds) if (!item.photoIds.includes(id)) await db.remove('photos', id);
     await db.touchProject(pid);
     toast(t('saved'));
     if (andNew) renderItemForm(app, { pid }, ctx);
