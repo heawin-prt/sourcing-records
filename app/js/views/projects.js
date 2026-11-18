@@ -3,7 +3,7 @@
 import * as db from '../db.js';
 import { t } from '../i18n.js';
 import { esc, $, confirmDialog } from '../ui.js';
-import { projectSummary, projectType } from './project-new.js';
+import { projectSummary, projectDates, projectType } from './project-new.js';
 import { openPicker } from '../picker.js';
 
 const SORTS = ['date', 'dateAsc', 'name', 'procurement', 'exhibition'];
@@ -39,9 +39,9 @@ export async function renderProjects(app, _params, ctx) {
     ${projects.length ? projects.map(p => `
       <div class="list-item" data-open="${esc(p.id)}">
         <div class="main">
-          <div class="name">${esc(p.name)}</div>
+          <div class="name name-date"><span class="nm">${esc(p.name)}</span>${projectDates(p) ? `<span class="dt">${esc(projectDates(p, { short: true }))}</span>` : ''}</div>
           <div class="meta">
-            ${projectSummary(p) ? `<span>${esc(projectSummary(p))}</span>` : ''}
+            ${projectSummary(p, { date: false }) ? `<span>${esc(projectSummary(p, { date: false }))}</span>` : ''}
             <span>${esc(t('itemsCount', { n: counts[p.id] }))}</span>
           </div>
           ${p.desc ? `<div class="meta desc">${esc(p.desc)}</div>` : ''}
