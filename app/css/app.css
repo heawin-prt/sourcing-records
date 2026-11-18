@@ -393,9 +393,3 @@ body.picker-open { overflow: hidden; }
 /* 币种下拉的字体与字段标题（如 Price）一致 */
 .form-compact .price-row select { font-size: 13px; font-family: inherit; }
 .rec-time { font-size: 13px; padding: 2px 0 8px; }
-
-/* 项目列表：名称行占满整行，日期靠最右（与 Delete 右边对齐）；下面一行是信息 + Edit/Delete */
-.list-item.proj-item { display: block; }
-.proj-item .name-date { justify-content: space-between; }
-.proj-item .name-date .nm { flex: 1 1 auto; min-width: 0; }
-.proj-body { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
