@@ -64,7 +64,7 @@ export async function renderItem(app, { pid, iid }, ctx) {
           ${p.qty ? `<span class="muted">×${esc(p.qty)}</span>` : ''}
         </div>` : ''}
         ${productLines(p, sup) ? `<div class="muted">${productLines(p, sup)}</div>` : ''}
-        <div class="row" style="margin-top:8px">
+        <div class="row product-actions">
           <label class="check"><input type="checkbox" data-choose="${esc(p.id)}" ${p.chosen ? 'checked' : ''}>${esc(t('chosen'))}</label>
           <span class="spacer"></span>
           <button class="btn small" data-edit="${esc(p.id)}">${esc(t('edit'))}</button>
