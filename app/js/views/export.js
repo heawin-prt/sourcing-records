@@ -6,6 +6,7 @@ import { esc, $, $$, toast, STATUSES } from '../ui.js';
 import { loadProject } from './summary.js';
 import { COLUMNS, DEFAULT_COLUMNS, GROUP_BY, pickRows, buildWorkbook } from '../export-excel.js';
 import { buildDocx } from '../export-word.js';
+import { projectType } from './project-new.js';
 
 export async function renderExport(app, { pid }, ctx) {
   const data = await loadProject(pid);
@@ -24,7 +25,10 @@ export async function renderExport(app, { pid }, ctx) {
   if (prefs.v !== 4) prefs = DEFAULT_PREFS;
   if (!prefs.statuses) prefs = { ...prefs, statuses: [...STATUSES] };
 
-  const colBox = c => `<label class="check"><input type="checkbox" name="col" value="${c.key}" ${prefs.columns.includes(c.key) ? 'checked' : ''}>${esc(c.label())}</label>`;
+  const colBox = c => `<label class="check"><input type="checkbox" name="col" value="${c.key}" ${prefs.columns.includes(c.key) ? 'checked' : ''}>${esc(c.label(data.project))}</label>`;
+  // 展会项目没有"市场名称"
+  const expo = projectType(data.project) === 'exhibition';
+  const shownCols = COLUMNS.filter(c => !(expo && c.key === 'marketName'));
 
   const FORMATS = { xlsx: 'Excel', docx: 'Word' };
   if (!FORMATS[prefs.format]) prefs = { ...prefs, format: 'xlsx' };
@@ -71,7 +75,7 @@ export async function renderExport(app, { pid }, ctx) {
           <button type="button" class="btn small" id="col-all">${esc(t('selectAll'))}</button>
           <button type="button" class="btn small" id="col-none">${esc(t('selectNone'))}</button></div>
         <div class="grid2" style="margin-top:8px">
-          ${COLUMNS.map(colBox).join('')}
+          ${shownCols.map(colBox).join('')}
         </div>
       </div>
     </form>

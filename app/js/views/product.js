@@ -9,6 +9,7 @@ import { esc, $, $$, blobUrl, toast, toLocalInput, fromLocalInput, confirmDialog
 import { processPhoto } from '../photo.js';
 import { FX_CURRENCIES, getRates, convert } from '../fx.js';
 import { dateField, bindDateFields, refreshDateField } from '../datepicker.js';
+import { projectType } from './project-new.js';
 
 const TEXT_FIELDS = ['material', 'size', 'color', 'quality'];
 
@@ -19,6 +20,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   const stored = isNew ? null : await db.get('products', prid);
   if (!isNew && !stored) return ctx.nav(`/p/${pid}/item/${iid}`, true);
   const backPath = `/p/${pid}/item/${iid}`;
+  const expo = projectType(await db.get('projects', pid)) === 'exhibition'; // 展会：展位信息，没有市场名称
   const draftKey = `draft:${prid || 'new:' + iid}`;
 
   // 状态：先取草稿，没有草稿再取已保存的记录
@@ -87,8 +89,14 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
           <button type="button" class="btn" id="new-sup">${esc(t('newSupplier'))}</button>
         </div>
       </div>
-      <label class="field"><span>${esc(t('marketName'))}</span><input type="text" name="marketName" value="${esc(p.marketName ?? '')}"></label>
-      <label class="field"><span>${esc(t('shopInfo'))}</span><textarea name="shopInfo" rows="1" placeholder="${esc(t('shopInfoHint'))}">${esc(p.shopInfo ?? '')}</textarea></label>
+      ${expo ? '' : `<label class="field"><span>${esc(t('marketName'))}</span><input type="text" name="marketName" value="${esc(p.marketName ?? '')}"></label>`}
+      <div class="field"><span>${esc(t(expo ? 'standInfo' : 'shopInfo'))}</span>
+        <div class="row shop-row">
+          <textarea name="shopInfo" rows="1" placeholder="${esc(t(expo ? 'standInfoHint' : 'shopInfoHint'))}">${esc(p.shopInfo ?? '')}</textarea>
+          <label class="btn icon-btn" title="${esc(t('shopPhoto'))}" aria-label="${esc(t('shopPhoto'))}">${ICONS.camera}<input type="file" accept="image/*" capture="environment" id="shop-cam" hidden></label>
+        </div>
+        <div class="photo-grid small" id="shop-photos"></div>
+      </div>
      </div>
 
      <div class="card grp grp-c">
@@ -117,24 +125,29 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   form.supplierId.value = p.supplierId || '';
 
   // —— 照片 ——
+  // 两组照片：产品照片 photoIds（顶部拍照/相册）和店铺/展位照片 shopPhotoIds（店铺信息旁的相机）
+  if (!p.shopPhotoIds) p.shopPhotoIds = [];
+  const GRID = { photoIds: '#photos', shopPhotoIds: '#shop-photos' };
   async function renderPhotos() {
-    const html = [];
-    for (const id of p.photoIds) {
-      const ph = await db.get('photos', id);
-      if (ph) html.push(`<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" alt=""><button type="button" class="del" data-del-photo="${esc(id)}">✕</button></div>`);
+    for (const [key, sel] of Object.entries(GRID)) {
+      const html = [];
+      for (const id of p[key]) {
+        const ph = await db.get('photos', id);
+        if (ph) html.push(`<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" alt=""><button type="button" class="del" data-del-photo="${esc(id)}" data-key="${key}">✕</button></div>`);
+      }
+      $(sel).innerHTML = html.join('');
     }
-    $('#photos').innerHTML = html.join('');
   }
 
-  async function addFiles(files) {
+  async function addFiles(files, key = 'photoIds') {
     for (const file of files) {
       toast(t('processingPhoto'));
       const { blob, thumb, takenAt } = await processPhoto(file);
       const ph = await db.put('photos', { projectId: pid, blob, thumb, takenAt });
-      p.photoIds.push(ph.id);
+      p[key].push(ph.id);
       newPhotoIds.push(ph.id);
-      // 第一张照片决定记录时间
-      if (!timeEdited && p.photoIds.length === 1) setTime(takenAt || new Date().toISOString());
+      // 第一张产品照片决定记录时间
+      if (key === 'photoIds' && !timeEdited && p.photoIds.length === 1) setTime(takenAt || new Date().toISOString());
     }
     await saveDraft();
     renderPhotos();
@@ -142,16 +155,20 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
 
   $('#cam').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
   $('#album').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
-  $('#photos').onclick = async e => {
+  $('#shop-cam').onchange = e => { addFiles([...e.target.files], 'shopPhotoIds'); e.target.value = ''; };
+  const onDelPhoto = async e => {
     const b = e.target.closest('[data-del-photo]');
     if (!b || !await confirmDialog(t('deletePhoto'))) return;
     const id = b.dataset.delPhoto;
-    p.photoIds = p.photoIds.filter(x => x !== id);
+    const key = b.dataset.key;
+    p[key] = p[key].filter(x => x !== id);
     // 新拍的照片立即删除；原有照片等"保存"时再删除，以便"取消"能撤回
     if (newPhotoIds.includes(id)) { newPhotoIds = newPhotoIds.filter(x => x !== id); await db.remove('photos', id); }
     await saveDraft();
     renderPhotos();
   };
+  $('#photos').onclick = onDelPhoto;
+  $('#shop-photos').onclick = onDelPhoto;
 
   // —— 记录时间 ——
   function setTime(iso) {
@@ -187,7 +204,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     p.priceCny = num(form.priceCny.value);
     p.qty = num(form.qty.value);
     p.leadTime = num(form.leadTime.value);
-    for (const k of ['name', 'model', 'marketName', 'shopInfo', ...TEXT_FIELDS, 'moq', 'note']) p[k] = form.elements[k].value.trim();
+    for (const k of ['name', 'model', 'marketName', 'shopInfo', ...TEXT_FIELDS, 'moq', 'note']) if (form.elements[k]) p[k] = form.elements[k].value.trim();
     p.supplierId = form.supplierId.value || null;
     p.fxCurrency = form.fxCurrency.value || null;
   }
@@ -250,7 +267,8 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     await db.put('products', p);
     // 编辑时删掉的旧照片，保存后才真正删除
     if (stored) {
-      for (const id of stored.photoIds || []) if (!p.photoIds.includes(id)) await db.remove('photos', id);
+      const keep = new Set([...p.photoIds, ...p.shopPhotoIds]);
+      for (const id of [...(stored.photoIds || []), ...(stored.shopPhotoIds || [])]) if (!keep.has(id)) await db.remove('photos', id);
     }
     // 物品有了第一个候选产品，进度从"未开始"自动改成"待决定"
     if ((item.status || 'todo') === 'todo') {
@@ -271,7 +289,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   if (!isNew) $('#del').onclick = async () => {
     if (!await confirmDialog(t('confirmDeleteProduct'))) return;
     await clearDraft();
-    await db.removeProduct({ ...p, photoIds: [...new Set([...(stored.photoIds || []), ...p.photoIds])] });
+    await db.removeProduct({ ...p, photoIds: [...new Set([...(stored.photoIds || []), ...p.photoIds, ...(stored.shopPhotoIds || []), ...p.shopPhotoIds])], shopPhotoIds: [] });
     ctx.nav(backPath, true);
   };
 

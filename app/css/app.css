@@ -353,3 +353,10 @@ body.picker-open { overflow: hidden; }
 .grp-a { background: color-mix(in srgb, var(--primary) 9%, var(--card)); border-color: color-mix(in srgb, var(--primary) 25%, var(--line)); }
 .grp-b { background: color-mix(in srgb, var(--st-pending) 9%, var(--card)); border-color: color-mix(in srgb, var(--st-pending) 25%, var(--line)); }
 .grp-c { background: color-mix(in srgb, var(--st-done) 8%, var(--card)); border-color: color-mix(in srgb, var(--st-done) 22%, var(--line)); }
+
+/* 店铺/展位信息 + 右侧相机按钮；下面是小缩略图 */
+.shop-row { gap: 6px; align-items: flex-start; }
+.shop-row textarea { flex: 1; min-width: 0; }
+.form-compact .icon-btn { flex: none; width: 40px; padding: 0; justify-content: center; }
+.photo-grid.small { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; margin: 6px 0 0; }
+.photo-grid.small .del { width: 22px; height: 22px; font-size: 12px; top: 2px; right: 2px; }
