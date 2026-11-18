@@ -53,23 +53,17 @@ export async function renderItem(app, { pid, iid }, ctx) {
       return `
       <div class="card product ${p.chosen ? 'chosen' : ''}">
         ${photoUrls[p.id].length ? `<div class="photos">${photoUrls[p.id].map(u => `<img src="${u}" alt="">`).join('')}</div>` : ''}
-        <div class="product-top">
+        ${p.name || p.model || p.rating ? `<div class="product-top">
           <span class="product-name">${esc([p.name, p.model].filter(Boolean).join(' · '))}</span>
-          <span class="stars">${stars(p.rating)}</span>
-        </div>
-        <div class="head">
-          <span class="price">${esc(fmtProductPrice(p)) || '—'}</span>
+          ${p.rating ? `<span class="stars">${stars(p.rating)}</span>` : ''}
+        </div>` : ''}
+        ${fmtProductPrice(p) || p.qty ? `<div class="head">
+          ${fmtProductPrice(p) ? `<span class="price">${esc(fmtProductPrice(p))}</span>` : ''}
           ${productPrice(p).currency !== 'CNY' && p.priceCny != null ? `<span class="muted">≈ ${esc(fmtMoney(p.priceCny))}</span>` : ''}
           ${productFx(p) ? `<span class="muted">≈ ${esc(productFx(p))}</span>` : ''}
           ${p.qty ? `<span class="muted">×${esc(p.qty)}</span>` : ''}
-        </div>
-        <div class="muted">
-          ${sup ? esc([sup.name, sup.booth, sup.phone].filter(Boolean).join(' · ')) + '<br>' : ''}
-          ${p.marketName || p.shopInfo ? esc([p.marketName, p.shopInfo].filter(Boolean).join(' · ')) + '<br>' : ''}
-          ${esc([p.material, p.size, p.color, p.leadTime && `${t('leadTime')}: ${p.leadTime}`, p.moq && `${t('moq')}: ${p.moq}`].filter(Boolean).join(' · '))}
-          ${p.note ? `<br>${esc(p.note)}` : ''}
-          <br>${esc(fmtDateTime(p.recordedAt))}${p.createdBy ? ' · ' + esc(p.createdBy) : ''}
-        </div>
+        </div>` : ''}
+        ${productLines(p, sup) ? `<div class="muted">${productLines(p, sup)}</div>` : ''}
         <div class="row" style="margin-top:8px">
           <label class="check"><input type="checkbox" data-choose="${esc(p.id)}" ${p.chosen ? 'checked' : ''}>${esc(t('chosen'))}</label>
           <span class="spacer"></span>
@@ -216,4 +210,16 @@ export function fieldText(item, fd) {
   const v = item.fields?.[fd.key];
   if (!fd.currency || v === undefined || v === '') return v ?? '';
   return `${v} ${item.fields[fd.key + 'Currency'] || 'CNY'}`;
+}
+
+/** 产品卡片的说明行：没有内容的行不显示（不留空行）。 */
+function productLines(p, sup) {
+  const join = arr => arr.filter(v => v !== undefined && v !== null && String(v).trim() !== '').join(' · ');
+  return [
+    sup && join([sup.name, sup.booth, sup.phone]),
+    join([p.marketName, p.shopInfo]),
+    join([p.material, p.size, p.color, p.quality, p.leadTime && `${t('leadTime')}: ${p.leadTime}`, p.moq && `${t('moq')}: ${p.moq}`]),
+    p.note,
+    join([fmtDateTime(p.recordedAt), p.createdBy]),
+  ].filter(v => v && String(v).trim()).map(v => esc(v)).join('<br>');
 }
