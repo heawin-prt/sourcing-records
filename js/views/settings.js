@@ -2,7 +2,7 @@
 
 import * as db from '../db.js';
 import { t, getLang, setLang } from '../i18n.js';
-import { esc, $, fmtBytes, toast } from '../ui.js';
+import { esc, $, fmtBytes, toast, DATE_ORDERS, getDateOrder, setDateOrder, fmtDate } from '../ui.js';
 import { VERSION } from '../version.js';
 import { FX_CURRENCIES, getRates } from '../fx.js';
 
@@ -21,6 +21,10 @@ export async function renderSettings(app, params, ctx) {
         <select id="lang">
           <option value="zh" ${getLang() === 'zh' ? 'selected' : ''}>中文</option>
           <option value="en" ${getLang() === 'en' ? 'selected' : ''}>English</option>
+        </select></label>
+      <label class="field"><span>${esc(t('dateFormat'))}</span>
+        <select id="date-order">
+          ${DATE_ORDERS.map(o => `<option value="${o}" ${getDateOrder() === o ? 'selected' : ''}>${esc(t('dateOrder_' + o))} — ${fmtDate('2026-11-20', o)}</option>`).join('')}
         </select></label>
       <label class="field"><span>${esc(t('nickname'))}</span>
         <input type="text" id="nick" value="${esc(nickname)}" maxlength="20">
@@ -42,7 +46,7 @@ export async function renderSettings(app, params, ctx) {
 
   const paintFx = r => {
     $('#fx').innerHTML = !r ? esc(t('fxNone'))
-      : `${FX_CURRENCIES.filter(c => r.rates[c]).map(c => `${c} ${r.rates[c].toFixed(4)}`).join(' · ')}<br>${esc(t('fxDate', { date: r.date }))}`;
+      : `${FX_CURRENCIES.filter(c => r.rates[c]).map(c => `${c} ${r.rates[c].toFixed(4)}`).join(' · ')}<br>${esc(t('fxDate', { date: fmtDate(r.date) }))}`;
   };
   getRates().then(paintFx);
   $('#fx-refresh').onclick = async () => { paintFx(await getRates({ force: true })); toast(t('saved')); };
@@ -50,6 +54,12 @@ export async function renderSettings(app, params, ctx) {
   $('#lang').onchange = async e => {
     setLang(e.target.value);
     await db.setMeta('lang', e.target.value);
+    renderSettings(app, params, ctx);
+  };
+  $('#date-order').onchange = async e => {
+    setDateOrder(e.target.value);
+    await db.setMeta('dateOrder', e.target.value);
+    toast(t('saved'));
     renderSettings(app, params, ctx);
   };
   $('#nick').onchange = async e => {

@@ -8,7 +8,7 @@
 // 选好后会在隐藏框上触发 change 事件（冒泡）。用代码改了值之后调用 refreshDateField(input)。
 
 import { t, getLang } from './i18n.js';
-import { esc, $ } from './ui.js';
+import { esc, $, fmtDate, parseDateText, datePlaceholder } from './ui.js';
 
 const pad = n => String(n).padStart(2, '0');
 const locale = () => (getLang() === 'en' ? 'en-US' : 'zh-CN');
@@ -19,26 +19,23 @@ function parse(v) {
   return { y: +m[1], mo: +m[2] - 1, d: +m[3], h: m[4] ? +m[4] : 0, mi: m[5] ? +m[5] : 0 };
 }
 
-/** 按 App 语言显示：Nov 17, 2026 / 2026年11月17日（带时间时加 14:05） */
+/** 按设置里的日期格式显示（带时间时加 14:05） */
 export function formatDateValue(v, withTime) {
   const p = parse(v);
   if (!p) return '';
-  const d = new Date(p.y, p.mo, p.d, p.h, p.mi);
-  const opts = { year: 'numeric', month: getLang() === 'en' ? 'short' : 'long', day: 'numeric' };
-  let s = new Intl.DateTimeFormat(locale(), opts).format(d);
+  let s = fmtDate(`${p.y}-${pad(p.mo + 1)}-${pad(p.d)}`); // 按设置里的日期格式
   if (withTime) s += ` ${pad(p.h)}:${pad(p.mi)}`;
   return s;
 }
 
 /**
- * manual=true：可直接输入日期（YYYY-MM-DD，也认 2026/11/20、2026.11.20、20261120、2026年11月20日），
- * 不弹日历（用户要求直接输入）。只用于纯日期。
+ * manual=true：直接输入日期，格式跟随设置（另外 2026-11-20、2026年11月20日 总能识别），不弹日历。只用于纯日期。
  */
 export function dateField(name, value, { time = false, manual = false } = {}) {
   if (manual && !time) {
     return `<span class="date-field manual" data-time="0">
       <input type="hidden" name="${esc(name)}" value="${esc(value || '')}">
-      <input type="text" class="date-text" inputmode="numeric" placeholder="YYYY-MM-DD" value="${esc(value || '')}" aria-label="${esc(name)}">
+      <input type="text" class="date-text" inputmode="numeric" placeholder="${datePlaceholder()}" value="${esc(fmtDate(value))}" aria-label="${esc(name)}">
     </span>`;
   }
   return `<span class="date-field" data-time="${time ? 1 : 0}">
@@ -47,22 +44,10 @@ export function dateField(name, value, { time = false, manual = false } = {}) {
   </span>`;
 }
 
-/** 手动输入的日期 → 'YYYY-MM-DD'；空串返回 ''；无法识别返回 null。 */
-export function parseTypedDate(s) {
-  s = String(s || '').trim();
-  if (!s) return '';
-  const m = s.match(/^(\d{4})\s*[-/.年]\s*(\d{1,2})\s*[-/.月]\s*(\d{1,2})\s*日?$/) || s.match(/^(\d{4})(\d{2})(\d{2})$/);
-  if (!m) return null;
-  const y = +m[1], mo = +m[2], d = +m[3];
-  const dt = new Date(y, mo - 1, d);
-  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
-  return `${y}-${pad(mo)}-${pad(d)}`;
-}
-
 export function refreshDateField(input) {
   const wrap = input.closest('.date-field');
   if (!wrap) return;
-  if (wrap.classList.contains('manual')) { wrap.querySelector('.date-text').value = input.value; return; }
+  if (wrap.classList.contains('manual')) { wrap.querySelector('.date-text').value = fmtDate(input.value); return; }
   const time = wrap.dataset.time === '1';
   wrap.querySelector('.date-btn').textContent = formatDateValue(input.value, time) || t('dpChoose');
 }
@@ -74,10 +59,10 @@ export function bindDateFields(root) {
     if (wrap.classList.contains('manual')) {
       const text = wrap.querySelector('.date-text');
       const commit = () => {
-        const v = parseTypedDate(text.value);
+        const v = parseDateText(text.value);
         if (v === null) { text.classList.add('bad'); return; } // 格式不对：标红，不改原值
         text.classList.remove('bad');
-        text.value = v;
+        text.value = fmtDate(v);
         if (v !== input.value) { input.value = v; input.dispatchEvent(new Event('change', { bubbles: true })); }
       };
       text.onchange = commit;
