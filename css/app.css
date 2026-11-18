@@ -370,3 +370,14 @@ body.picker-open { overflow: hidden; }
 .import-list li::before { content: counter(imp) "."; flex: none; width: 24px; text-align: right; color: var(--muted); align-self: flex-start; padding-top: 1px; }
 .import-list li .main { flex: 1; min-width: 0; }
 .import-list .del-x { flex: none; border: 0; background: none; color: var(--muted); font-size: 16px; width: 30px; height: 30px; cursor: pointer; }
+
+/* 项目信息页（采购、展会都是）：输入框高度 44 → 29（减 1/3） */
+.form-compact.box-29 { --box-h: 29px; }
+.form-compact .date-text { min-height: var(--box-h); height: var(--box-h); padding: 2px 8px; border-radius: 8px; }
+/* 开始/结束日期同一行（窄屏也不换行）；日期可直接输入，右边日历按钮 */
+.date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+.date-field.manual { display: flex; gap: 4px; align-items: center; }
+.date-field.manual .date-text { flex: 1; min-width: 0; }
+.date-text.bad { outline: 2px solid var(--danger); outline-offset: -1px; }
+.date-cal { flex: none; width: 32px; height: var(--box-h, 44px); border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--primary); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.form-compact.box-29 textarea { line-height: 1.45; }

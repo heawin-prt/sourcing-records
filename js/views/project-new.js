@@ -4,7 +4,7 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, $$, toast, ICONS } from '../ui.js';
+import { esc, $, $$, toast, ICONS, autoGrow } from '../ui.js';
 import { dateField, bindDateFields } from '../datepicker.js';
 import { categoryLabel } from '../templates.js';
 import { getLang } from '../i18n.js';
@@ -71,28 +71,28 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
       <span class="muted">${esc(t('importListHint'))}</span>
     </div>
     <div id="import-preview"></div>` : ''}
-    <form id="form" class="card" autocomplete="off">
+    <form id="form" class="card form-compact box-29" autocomplete="off">
       ${isNew ? '' : `<div class="field"><span>${esc(t('projectType'))}</span>
         <div class="seg seg2">${PROJECT_TYPES.map(ty => `<button type="button" data-type="${ty}" class="${ty === type ? 'on st-done' : ''}">${esc(t('ptype_' + ty))}</button>`).join('')}</div></div>`}
 
       <div id="ex-fields" ${type === 'exhibition' ? '' : 'hidden'}>
-        ${field('exName', 'exName')}
+        <label class="field"><span>${esc(t('exName'))} *</span><input type="text" name="exName" value="${v('exName')}"></label>
         <div class="grid2">
           ${field('city', 'exCity')}
           ${field('venue', 'exVenue')}
         </div>
       </div>
 
-      <label class="field"><span>${esc(t('projectName'))} *</span><input type="text" name="pname" value="${esc(project.name ?? '')}" required></label>
+      <label class="field" id="name-field" ${type === 'exhibition' ? 'hidden' : ''}><span>${esc(t('projectName'))} *</span><input type="text" name="pname" value="${esc(project.name ?? '')}"></label>
 
       <div id="pr-fields" ${type === 'procurement' ? '' : 'hidden'}>
         ${field('location', 'projectLocation')}
         ${field('purpose', 'projectPurpose', `placeholder="${esc(t('projectPurposeHint'))}"`)}
       </div>
 
-      <div class="grid2">
-        <div class="field"><span id="date-label">${esc(t(type === 'exhibition' ? 'exDateStart' : 'projectDate'))}</span>${dateField('date', project.date)}</div>
-        <div class="field" id="date-end" ${type === 'exhibition' ? '' : 'hidden'}><span>${esc(t('exDateEnd'))}</span>${dateField('dateEnd', project.dateEnd)}</div>
+      <div class="date-row">
+        <div class="field"><span id="date-label">${esc(t(type === 'exhibition' ? 'exDateStart' : 'projectDate'))}</span>${dateField('date', project.date, { manual: true })}</div>
+        <div class="field" id="date-end" ${type === 'exhibition' ? '' : 'hidden'}><span>${esc(t('exDateEnd'))}</span>${dateField('dateEnd', project.dateEnd, { manual: true })}</div>
       </div>
 
       <div id="ex-fields2" ${type === 'exhibition' ? '' : 'hidden'}>
@@ -115,6 +115,7 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
 
   const form = $('#form');
   bindDateFields(form);
+  autoGrow(form);
 
   // —— 导入采购清单 ——
   const lang = getLang();
@@ -164,6 +165,8 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
     $('#ex-fields2').hidden = !ex;
     $('#date-end').hidden = !ex;
     $('#pr-fields').hidden = ex;
+    $('#name-field').hidden = ex; // 展会：项目名称就是展会名称
+    if (!ex && !form.pname.value.trim()) form.pname.value = form.exName.value.trim();
     $('#date-label').textContent = t(ex ? 'exDateStart' : 'projectDate');
     $('#desc-label').textContent = t(ex ? 'exDesc' : 'projectDesc');
     $$('.seg2 button', form).forEach(b => { b.className = b.dataset.type === type ? 'on st-done' : ''; });
@@ -183,8 +186,13 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
   form.onsubmit = e => { e.preventDefault(); $('#save').click(); };
 
   $('#save').onclick = async () => {
-    const name = form.pname.value.trim();
-    if (!name) { toast(t('required', { field: t('projectName') })); form.pname.focus(); return; }
+    // 展会项目：名称 = 展会名称（改展会名称就是改项目名称）
+    const name = type === 'exhibition' ? form.exName.value.trim() : form.pname.value.trim();
+    if (!name) {
+      const f = type === 'exhibition' ? form.exName : form.pname;
+      toast(t('required', { field: t(type === 'exhibition' ? 'exName' : 'projectName') })); f.focus(); return;
+    }
+    if ($$('.date-text.bad', form).length) { toast(t('dateInvalid')); $('.date-text.bad', form).focus(); return; }
     $('#save').disabled = true;
     const val = k => form[k].value.trim();
     const rec = { ...project, type, name, date: form.date.value, desc: val('desc') };
