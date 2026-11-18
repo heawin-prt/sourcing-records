@@ -4,6 +4,7 @@ import * as db from './db.js';
 import { t, getLang } from './i18n.js';
 import { CATEGORIES, COMMON_FIELDS, label, categoryLabel, isBuiltinCategory } from './templates.js';
 import { fmtDateTime, itemTitle } from './ui.js';
+import { projectType } from './views/project-new.js';
 import { productFx } from './fx.js';
 
 /** 行金额 = 单价 × 数量（产品数量优先，没有则用清单数量）。 */
@@ -57,7 +58,7 @@ export const COLUMNS = [
   { key: 'storeLocation', label: () => t('storeLocation'), group: 'product', width: 18, get: (it, p, s) => s?.storeLocation ?? '' },
   { key: 'address', label: () => t('address'), group: 'product', width: 24, get: (it, p, s) => s?.address ?? '' },
   { key: 'marketName', label: () => t('marketName'), group: 'product', width: 16, get: (it, p) => p?.marketName ?? '' },
-  { key: 'shopInfo', label: () => t('shopInfo'), group: 'product', width: 20, get: (it, p) => p?.shopInfo ?? '' },
+  { key: 'shopInfo', label: proj => t(projectType(proj) === 'exhibition' ? 'standInfo' : 'shopInfo'), group: 'product', width: 20, get: (it, p) => p?.shopInfo ?? '' },
   { key: 'productName', label: () => t('colProductName'), group: 'product', width: 18, get: (it, p) => p?.name ?? '' },
   { key: 'model', label: () => t('model'), group: 'product', width: 14, get: (it, p) => p?.model ?? '' },
   { key: 'priceCny', label: () => t('priceCny'), group: 'product', width: 12, num: true, money: true, get: (it, p) => p?.priceCny ?? '' },
@@ -143,7 +144,8 @@ export function planExport(data, opts) {
   const wantTotal = opts.columns.includes('total');
   // 要分组合计或总合计，就必须有小计列
   const colKeys = (groupTotals || wantTotal) && !opts.columns.includes('amount') ? [...opts.columns, 'amount'] : opts.columns;
-  const cols = COLUMNS.filter(c => colKeys.includes(c.key) && !c.rowOnly);
+  const expo = projectType(data.project) === 'exhibition'; // 展会项目没有"市场名称"
+  const cols = COLUMNS.filter(c => colKeys.includes(c.key) && !c.rowOnly && !(expo && c.key === 'marketName'));
   const nPhotos = opts.photos || 0;
   // 按分组排列（同组内保持清单顺序）
   const itemIndex = new Map(data.items.map((it, i) => [it.id, i]));
@@ -178,7 +180,7 @@ export async function buildWorkbook(data, opts) {
   const IMG = 90; // 图片显示边长（像素）
   ws.columns = [
     { header: t('colNo'), width: 6 },
-    ...cols.map(c => ({ header: c.label(), width: c.width })),
+    ...cols.map(c => ({ header: c.label(data.project), width: c.width })),
     ...Array.from({ length: nPhotos }, (_, i) => ({ header: nPhotos > 1 ? `${t('colPhoto')} ${i + 1}` : t('colPhoto'), width: 14 })),
   ];
   const header = ws.getRow(1);

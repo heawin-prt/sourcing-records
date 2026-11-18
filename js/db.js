@@ -107,7 +107,7 @@ export async function removeItem(item) {
 }
 
 export async function removeProduct(product) {
-  for (const pid of product.photoIds || []) await remove('photos', pid);
+  for (const pid of [...(product.photoIds || []), ...(product.shopPhotoIds || [])]) await remove('photos', pid);
   await remove('products', product.id);
 }
 

@@ -63,7 +63,7 @@ export async function buildDocx(data, opts) {
     tableHeader: true,
     children: [
       cell(t('colNo'), { bold: true, fill: HEAD_FILL }),
-      ...cols.map(c => cell(c.label(), { bold: true, fill: HEAD_FILL })),
+      ...cols.map(c => cell(c.label(data.project), { bold: true, fill: HEAD_FILL })),
       ...Array.from({ length: nPhotos }, (_, i) => cell(nPhotos > 1 ? `${t('colPhoto')} ${i + 1}` : t('colPhoto'), { bold: true, fill: HEAD_FILL })),
     ],
   });
