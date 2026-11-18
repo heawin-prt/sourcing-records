@@ -2,7 +2,7 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, blobUrl, releaseUrls, fmtMoney, stars, toast, itemTitleHtml } from '../ui.js';
+import { esc, $, blobUrl, releaseUrls, fmtMoney, stars, toast, itemTitleHtml, ICONS } from '../ui.js';
 import { productFx, fmtProductPrice } from '../fx.js';
 import { loadProject } from './summary.js';
 import { viewSwitch, supplierOptions } from './overview.js';
@@ -18,7 +18,7 @@ export async function renderProducts(app, { pid }, ctx) {
   const f = filters[pid] ||= { sup: '', onlyChosen: false };
   if (f.sup && !supplierMap[f.sup]) f.sup = '';
 
-  ctx.setTop(project.name, '/', `<button class="top-btn" id="go-export">${esc(t('exportExcel'))}</button>`);
+  ctx.setTop(project.name, '/', `<button class="top-btn icon-only" id="go-export" title="${esc(t('exportExcel'))}" aria-label="${esc(t('exportExcel'))}">${ICONS.export}</button>`);
   $('#go-export').onclick = () => ctx.nav(`/p/${pid}/export`);
 
   const thumbs = {};

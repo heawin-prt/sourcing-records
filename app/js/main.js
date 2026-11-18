@@ -13,11 +13,13 @@ import { renderSupplierList, renderSupplierForm } from './views/supplier.js';
 import { renderProducts } from './views/products.js';
 import { importBundledProjects } from './seed.js';
 import { renderProjectNew } from './views/project-new.js';
+import { renderTrash } from './views/trash.js';
 
 // 路由表：模式 → 页面函数。参数用 :name 表示。
 const ROUTES = [
   ['/', renderProjects],
   ['/settings', renderSettings],
+  ['/trash', renderTrash],
   ['/new', renderProjectNew],
   ['/p/:pid/products', renderProducts],
   ['/p/:pid/info', renderProjectNew],
@@ -83,6 +85,8 @@ async function route() {
 
 async function init() {
   initLang(await db.getMeta('lang'));
+  // 申请持久存储：浏览器空间紧张时也不会自动清掉本 App 的数据
+  try { if (navigator.storage?.persist && !(await navigator.storage.persisted())) navigator.storage.persist(); } catch { /* 不支持则忽略 */ }
   setDateOrder(await db.getMeta('dateOrder', 'ymd'));
   db.setCurrentUser(await db.getMeta('nickname', ''));
   await importBundledProjects();

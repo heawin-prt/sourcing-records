@@ -398,3 +398,15 @@ body.picker-open { overflow: hidden; }
 .product-top { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 .product-top .product-name { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .product-top .stars { flex: none; font-size: 18px; letter-spacing: 2px; }
+
+/* R9：图标按钮 */
+.top-btn.icon-only { padding: 5px 7px; display: inline-flex; align-items: center; justify-content: center; }
+.top-btn.icon-only .icon { width: 20px; height: 20px; }
+.btn.icon-btn-sm { padding: 0; width: 36px; justify-content: center; }
+.btn.icon-btn-sm .icon { width: 18px; height: 18px; }
+/* 左下角垃圾箱 */
+.fab.trash-fab { width: 42px; min-height: 42px; padding: 0; border-radius: 21px; justify-content: center; background: var(--card); color: var(--muted); border: 1px solid var(--line); }
+.trash-fab .badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--danger); color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+.restore-btn { gap: 4px; }
+.restore-btn .icon { width: 16px; height: 16px; }
+.typed-confirm { margin-bottom: 14px; }

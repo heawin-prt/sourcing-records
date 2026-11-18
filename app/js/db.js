@@ -91,12 +91,63 @@ export async function remove(storeName, id) {
   await put(storeName, rec);
 }
 
-/** 删除项目及其下所有记录（软删除）。 */
+const CHILD_STORES = ['items', 'products', 'suppliers', 'photos'];
+
+/**
+ * 删除项目（放进垃圾箱）：项目和其下记录都软删除，子记录标上 deletedWith，恢复时只恢复这些。
+ */
 export async function removeProject(projectId) {
-  for (const name of ['items', 'products', 'suppliers', 'photos']) {
-    for (const r of await listByProject(name, projectId)) await remove(name, r.id);
+  for (const name of CHILD_STORES) {
+    for (const r of await listByProject(name, projectId)) await put(name, { ...r, deleted: true, deletedWith: projectId });
   }
-  await remove('projects', projectId);
+  const s = await store('projects');
+  const rec = await wrap(s.get(projectId));
+  if (rec) await put('projects', { ...rec, deleted: true, deletedAt: new Date().toISOString() });
+}
+
+/** 垃圾箱里的项目（最近删除的在前）。 */
+export async function listDeletedProjects() {
+  const s = await store('projects');
+  const all = await wrap(s.getAll());
+  return all.filter(r => r.deleted).sort((a, b) => (b.deletedAt || b.updatedAt).localeCompare(a.deletedAt || a.updatedAt));
+}
+
+async function allByProject(storeName, projectId) {
+  const s = await store(storeName);
+  return wrap(s.index('projectId').getAll(projectId));
+}
+
+/** 从垃圾箱恢复项目。旧版本删除的没有 deletedWith，按删除时间（前后 2 分钟）找回子记录。 */
+export async function restoreProject(projectId) {
+  const s = await store('projects');
+  const proj = await wrap(s.get(projectId));
+  if (!proj) return;
+  const at = Date.parse(proj.deletedAt || proj.updatedAt);
+  for (const name of CHILD_STORES) {
+    const rows = await allByProject(name, projectId);
+    const tagged = rows.some(r => r.deletedWith === projectId);
+    for (const r of rows) {
+      if (!r.deleted) continue;
+      const hit = tagged ? r.deletedWith === projectId : Math.abs(Date.parse(r.updatedAt) - at) < 120000;
+      if (hit) { const { deletedWith, ...rest } = r; await put(name, { ...rest, deleted: false }); }
+    }
+  }
+  const { deletedAt, ...rest } = proj;
+  await put('projects', { ...rest, deleted: false });
+}
+
+/** 彻底删除一个项目及其下全部记录（不可恢复）。 */
+export async function purgeProject(projectId) {
+  const db = await openDb();
+  for (const name of CHILD_STORES) {
+    const rows = await allByProject(name, projectId);
+    const tx = db.transaction(name, 'readwrite');
+    for (const r of rows) tx.objectStore(name).delete(r.id);
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+  }
+  const tx = db.transaction('projects', 'readwrite');
+  tx.objectStore('projects').delete(projectId);
+  await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
 }
 
 /** 删除物品及其产品（软删除）。照片随产品一起保留标记。 */
