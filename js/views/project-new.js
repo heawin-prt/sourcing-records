@@ -18,12 +18,21 @@ const today = () => {
 };
 
 /** 项目信息的一行摘要（项目列表、项目页顶部共用）。地点前不加图钉图标（C51）。 */
-export function projectSummary(p) {
+/** date=false：不含日期（项目列表把日期放在名称后面）。 */
+export function projectSummary(p, { date = true } = {}) {
   if (projectType(p) === 'exhibition') {
-    const dates = p.dateEnd && p.dateEnd !== p.date ? `${p.date || ''} – ${p.dateEnd}` : p.date;
-    return [p.exName && `🏛 ${p.exName}`, [p.city, p.venue].filter(Boolean).join(' · '), dates].filter(Boolean).join(' · ');
+    const exName = p.exName && p.exName !== p.name ? `🏛 ${p.exName}` : ''; // 名称就是展会名称时不重复
+    return [exName, [p.city, p.venue].filter(Boolean).join(' · '), date && projectDates(p)].filter(Boolean).join(' · ');
   }
-  return [p.location, p.date].filter(Boolean).join(' · ');
+  return [p.location, date && p.date].filter(Boolean).join(' · ');
+}
+
+/** 项目日期：展会有结束日期时显示起止。 */
+export function projectDates(p, { short = false } = {}) {
+  if (!(projectType(p) === 'exhibition' && p.dateEnd && p.dateEnd !== p.date)) return p.date || '';
+  // short：同一年的结束日期省略年份（2026-10-15 – 10-19）
+  const end = short && p.date && p.date.slice(0, 5) === p.dateEnd.slice(0, 5) ? p.dateEnd.slice(5) : p.dateEnd;
+  return `${p.date || ''} – ${end}`;
 }
 
 export async function renderProjectNew(app, { pid }, ctx, query = {}) {

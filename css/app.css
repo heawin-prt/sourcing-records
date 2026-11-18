@@ -384,3 +384,8 @@ body.picker-open { overflow: hidden; }
 /* Import list 按钮：浅黄色底 */
 .import-bar .btn { background: #fff3bf; border-color: #f0d77a; color: #3d3200; }
 @media (prefers-color-scheme: dark) { .import-bar .btn { background: #4a4120; border-color: #6b5d2a; color: #fbeeb8; } }
+
+/* 项目列表：日期紧跟在项目名称后面，保持原来日期的字体（小号灰色） */
+.list-item .name-date { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.name-date .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 3em; }
+.name-date .dt { flex: none; font-size: 13px; font-weight: 400; color: var(--muted); white-space: nowrap; }
