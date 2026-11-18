@@ -30,16 +30,42 @@ export function formatDateValue(v, withTime) {
   return s;
 }
 
-export function dateField(name, value, { time = false } = {}) {
+const CAL_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
+
+/**
+ * manual=true：可直接输入日期（YYYY-MM-DD，也认 2026/11/20、2026.11.20、20261120、2026年11月20日），
+ * 右边的日历按钮仍可点开日历选择。只用于纯日期。
+ */
+export function dateField(name, value, { time = false, manual = false } = {}) {
+  if (manual && !time) {
+    return `<span class="date-field manual" data-time="0">
+      <input type="hidden" name="${esc(name)}" value="${esc(value || '')}">
+      <input type="text" class="date-text" inputmode="numeric" placeholder="YYYY-MM-DD" value="${esc(value || '')}" aria-label="${esc(name)}">
+      <button type="button" class="date-cal" aria-label="${esc(t('dpChoose'))}">${CAL_ICON}</button>
+    </span>`;
+  }
   return `<span class="date-field" data-time="${time ? 1 : 0}">
     <input type="hidden" name="${esc(name)}" value="${esc(value || '')}">
     <button type="button" class="pick-btn date-btn">${esc(formatDateValue(value, time) || t('dpChoose'))}</button>
   </span>`;
 }
 
+/** 手动输入的日期 → 'YYYY-MM-DD'；空串返回 ''；无法识别返回 null。 */
+export function parseTypedDate(s) {
+  s = String(s || '').trim();
+  if (!s) return '';
+  const m = s.match(/^(\d{4})\s*[-/.年]\s*(\d{1,2})\s*[-/.月]\s*(\d{1,2})\s*日?$/) || s.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (!m) return null;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  const dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+  return `${y}-${pad(mo)}-${pad(d)}`;
+}
+
 export function refreshDateField(input) {
   const wrap = input.closest('.date-field');
   if (!wrap) return;
+  if (wrap.classList.contains('manual')) { wrap.querySelector('.date-text').value = input.value; return; }
   const time = wrap.dataset.time === '1';
   wrap.querySelector('.date-btn').textContent = formatDateValue(input.value, time) || t('dpChoose');
 }
@@ -48,6 +74,26 @@ export function bindDateFields(root) {
   root.querySelectorAll('.date-field').forEach(wrap => {
     const input = wrap.querySelector('input');
     const time = wrap.dataset.time === '1';
+    if (wrap.classList.contains('manual')) {
+      const text = wrap.querySelector('.date-text');
+      const commit = () => {
+        const v = parseTypedDate(text.value);
+        if (v === null) { text.classList.add('bad'); return; } // 格式不对：标红，不改原值
+        text.classList.remove('bad');
+        text.value = v;
+        if (v !== input.value) { input.value = v; input.dispatchEvent(new Event('change', { bubbles: true })); }
+      };
+      text.onchange = commit;
+      text.onblur = commit;
+      text.oninput = () => text.classList.remove('bad');
+      wrap.querySelector('.date-cal').onclick = () => openDatePicker(input.value, false, v => {
+        input.value = v;
+        refreshDateField(input);
+        text.classList.remove('bad');
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      return;
+    }
     wrap.querySelector('.date-btn').onclick = () => openDatePicker(input.value, time, v => {
       input.value = v;
       refreshDateField(input);
