@@ -6,13 +6,14 @@ import { esc, $, confirmDialog } from '../ui.js';
 import { projectSummary, projectType, PROJECT_TYPES } from './project-new.js';
 import { openPicker } from '../picker.js';
 
-const SORTS = ['date', 'type', 'name'];
+const SORTS = ['date', 'dateAsc', 'type', 'name'];
 const byName = (a, b) => (a.name || '').localeCompare(b.name || '', 'zh');
 // 日期：项目日期新的在前（没填日期的按创建时间）
 const dateOf = p => p.date || (p.createdAt || '').slice(0, 10);
 const byDate = (a, b) => dateOf(b).localeCompare(dateOf(a)) || byName(a, b);
 const SORT_FN = {
-  date: byDate,
+  date: byDate,                       // 日期倒序：新的在前
+  dateAsc: (a, b) => byDate(b, a),     // 日期顺序：旧的在前
   type: (a, b) => PROJECT_TYPES.indexOf(projectType(a)) - PROJECT_TYPES.indexOf(projectType(b)) || byDate(a, b),
   name: byName,
 };
@@ -29,7 +30,7 @@ export async function renderProjects(app, _params, ctx) {
 
   app.innerHTML = `
     <div class="row section-row"><div class="section-title">${esc(t('projectsHeading'))}</div><span class="spacer"></span>
-      ${projects.length > 1 ? `<button type="button" class="btn small" id="sort">${esc(t('sortBy'))}: ${esc(t('sort_' + sort))} ▾</button>` : ''}</div>
+      ${projects.length > 1 ? `<button type="button" class="btn small" id="sort">${esc(t('sortBy'))}: ${esc(sort.startsWith('date') ? t('sortShort_' + sort) : t('sort_' + sort))} ▾</button>` : ''}</div>
     ${projects.length ? projects.map(p => `
       <div class="list-item" data-open="${esc(p.id)}">
         <div class="main">
