@@ -3,7 +3,7 @@
 import * as db from '../db.js';
 import { t, getLang } from '../i18n.js';
 import { CATEGORIES, fieldsFor, label, categoryLabel, resolveCategory, isBuiltinCategory } from '../templates.js';
-import { esc, $, $$, blobUrl, fmtMoney, fmtDateTime, stars, toast, confirmDialog, STATUSES, itemTitle, itemTitleHtml } from '../ui.js';
+import { esc, $, $$, blobUrl, fmtMoney, fmtDateTime, stars, toast, confirmDialog, STATUSES, itemTitle, itemTitleHtml, ICONS } from '../ui.js';
 import { FX_CURRENCIES } from '../fx.js';
 import { openPicker } from '../picker.js';
 import { loadProject } from './summary.js';
@@ -16,7 +16,7 @@ export async function renderItem(app, { pid, iid }, ctx) {
   const lang = getLang();
   const st = item.status || 'todo';
 
-  ctx.setTop(itemTitle(item), `/p/${pid}`, `<button class="top-btn" id="edit-item">${esc(t('edit'))}</button>`, itemTitleHtml(item));
+  ctx.setTop(itemTitle(item), `/p/${pid}`, `<button class="top-btn icon-only" id="edit-item" title="${esc(t('edit'))}" aria-label="${esc(t('edit'))}">${ICONS.edit}</button>`, itemTitleHtml(item));
   $('#edit-item').onclick = () => ctx.nav(`/p/${pid}/item/${iid}/edit`);
 
   const fields = fieldsFor(item.category).filter(fd => item.fields?.[fd.key]);
@@ -67,7 +67,7 @@ export async function renderItem(app, { pid, iid }, ctx) {
         <div class="row product-actions">
           <label class="check"><input type="checkbox" data-choose="${esc(p.id)}" ${p.chosen ? 'checked' : ''}>${esc(t('chosen'))}</label>
           <span class="spacer"></span>
-          <button class="btn small" data-edit="${esc(p.id)}">${esc(t('edit'))}</button>
+          <button class="btn small icon-btn-sm" data-edit="${esc(p.id)}" title="${esc(t('edit'))}" aria-label="${esc(t('edit'))}">${ICONS.edit}</button>
         </div>
       </div>`;
     }).join('') : `<p class="empty">${esc(t('noProducts'))}</p>`}

@@ -61,7 +61,7 @@ export async function renderOverview(app, { pid }, ctx) {
   app.innerHTML = `
     <div class="project-info" id="info">
       <span class="pi-main">${esc(info || t('projectInfoEmpty'))}${project.desc ? ` — ${esc(project.desc)}` : ''}</span>
-      <span class="pi-edit">${esc(t('edit'))}</span>
+      <span class="pi-edit" title="${esc(t('edit'))}" aria-label="${esc(t('edit'))}">${ICONS.edit}</span>
     </div>
     ${viewSwitch(pid, 'items')}
     <div class="card compact">

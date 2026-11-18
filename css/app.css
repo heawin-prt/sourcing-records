@@ -420,3 +420,8 @@ body.picker-open { overflow: hidden; }
 .product-actions .check { min-height: 28px; gap: 8px; }
 .product-actions .check input { width: 18px; height: 18px; }
 .product-actions .btn.small { min-height: 28px; padding: 0 10px; }
+
+/* 所有"编辑"改为铅笔图标 */
+.project-info .pi-edit { display: inline-flex; align-items: center; }
+.project-info .pi-edit .icon { width: 18px; height: 18px; }
+.product-actions .btn.icon-btn-sm { width: 32px; padding: 0; }
