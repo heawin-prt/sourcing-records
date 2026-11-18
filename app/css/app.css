@@ -440,3 +440,5 @@ body.picker-open { overflow: hidden; }
 .item-photos { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 8px; }
 .item-photos img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; flex: none; }
 #item-photos.photo-grid { grid-template-columns: repeat(auto-fill, minmax(calc(88px * var(--ph)), calc(100px * var(--ph)))); }
+/* 右上角设置图标不加方框 */
+#go-settings { border-color: transparent; }
