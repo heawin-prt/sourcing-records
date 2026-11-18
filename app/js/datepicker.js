@@ -30,18 +30,15 @@ export function formatDateValue(v, withTime) {
   return s;
 }
 
-const CAL_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
-
 /**
  * manual=true：可直接输入日期（YYYY-MM-DD，也认 2026/11/20、2026.11.20、20261120、2026年11月20日），
- * 右边的日历按钮仍可点开日历选择。只用于纯日期。
+ * 不弹日历（用户要求直接输入）。只用于纯日期。
  */
 export function dateField(name, value, { time = false, manual = false } = {}) {
   if (manual && !time) {
     return `<span class="date-field manual" data-time="0">
       <input type="hidden" name="${esc(name)}" value="${esc(value || '')}">
       <input type="text" class="date-text" inputmode="numeric" placeholder="YYYY-MM-DD" value="${esc(value || '')}" aria-label="${esc(name)}">
-      <button type="button" class="date-cal" aria-label="${esc(t('dpChoose'))}">${CAL_ICON}</button>
     </span>`;
   }
   return `<span class="date-field" data-time="${time ? 1 : 0}">
@@ -86,12 +83,6 @@ export function bindDateFields(root) {
       text.onchange = commit;
       text.onblur = commit;
       text.oninput = () => text.classList.remove('bad');
-      wrap.querySelector('.date-cal').onclick = () => openDatePicker(input.value, false, v => {
-        input.value = v;
-        refreshDateField(input);
-        text.classList.remove('bad');
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-      });
       return;
     }
     wrap.querySelector('.date-btn').onclick = () => openDatePicker(input.value, time, v => {
