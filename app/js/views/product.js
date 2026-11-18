@@ -5,10 +5,9 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, $$, blobUrl, toast, toLocalInput, fromLocalInput, confirmDialog, itemTitle, itemTitleHtml, ICONS, autoGrow } from '../ui.js';
+import { esc, $, $$, blobUrl, toast, fmtDateTime, confirmDialog, itemTitle, itemTitleHtml, ICONS, autoGrow } from '../ui.js';
 import { processPhoto } from '../photo.js';
 import { PRICE_CURRENCIES, getRates, convert } from '../fx.js';
-import { dateField, bindDateFields, refreshDateField } from '../datepicker.js';
 import { projectType } from './project-new.js';
 import { openPicker } from '../picker.js';
 
@@ -39,7 +38,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   // 旧数据只有人民币价格
   if (p.price === undefined) { p.price = p.priceCny ?? null; p.priceCurrency = p.priceCurrency || 'CNY'; }
   let newPhotoIds = draft?.newPhotoIds || [];  // 本次新增、尚未随产品保存的照片
-  let timeEdited = draft?.timeEdited || false; // 用户手动改过记录时间
+  const timeEdited = false; // 记录时间不再手动修改（2026-11-17）
 
   const suppliers = (await db.listByProject('suppliers', pid)).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh'));
   // 刚从"新供应商"页保存回来：自动选中新建的供应商
@@ -124,8 +123,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         <label class="field"><span>${esc(t('plannedQty'))}</span><input type="number" inputmode="numeric" name="qty" value="${esc(p.qty ?? '')}"></label>
       </div>
       <label class="field"><span>${esc(t('note'))}</span><textarea name="note" rows="1">${esc(p.note ?? '')}</textarea></label>
-      <div class="field"><span>${esc(t('recordedAt'))}</span>
-        ${dateField('recordedAt', toLocalInput(p.recordedAt), { time: true })}</div>
+      <div class="rec-time muted" id="rec-time"></div>
      </div>
     </form>
 
@@ -137,7 +135,6 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   `;
 
   const form = $('#form');
-  bindDateFields(form);
   autoGrow(form);
   form.supplierId.value = p.supplierId || '';
 
@@ -214,10 +211,11 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   // —— 记录时间 ——
   function setTime(iso) {
     p.recordedAt = iso;
-    form.recordedAt.value = toLocalInput(iso);
-    refreshDateField(form.recordedAt);
+    paintTime();
   }
-  form.recordedAt.onchange = () => { timeEdited = true; p.recordedAt = fromLocalInput(form.recordedAt.value); saveDraft(); };
+  // 记录时间自动生成（第一张产品照片的拍摄时间，或开始录入的时间），不用手填，只显示
+  function paintTime() { $('#rec-time').textContent = p.recordedAt ? `${t('recordedAt')}: ${fmtDateTime(p.recordedAt)}` : ''; }
+  paintTime();
 
   // —— 评分 ——
   const paintRating = () => $$('#rating button').forEach(b => b.classList.toggle('on', Number(b.dataset.r) <= (p.rating || 0)));
@@ -286,7 +284,6 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   paintFx();
 
   form.oninput = e => {
-    if (e.target.name === 'recordedAt') return;
     if (e.target.name === 'price') paintFx();
     collect();
     // 没有照片时，第一次录入文字的时间就是记录时间
