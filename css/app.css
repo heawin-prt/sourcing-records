@@ -392,3 +392,4 @@ body.picker-open { overflow: hidden; }
 .name-date .dt { flex: none; font-size: 13px; font-weight: 400; color: var(--muted); white-space: nowrap; }
 /* 币种下拉的字体与字段标题（如 Price）一致 */
 .form-compact .price-row select { font-size: 13px; font-family: inherit; }
+.rec-time { font-size: 13px; padding: 2px 0 8px; }
