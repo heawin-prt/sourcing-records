@@ -410,3 +410,13 @@ body.picker-open { overflow: hidden; }
 .restore-btn { gap: 4px; }
 .restore-btn .icon { width: 16px; height: 16px; }
 .typed-confirm { margin-bottom: 14px; }
+
+/* 物品页产品卡片更紧凑：内边距、行距、Chosen/Edit 一行的上下空隙都缩小 */
+.card.product { padding: 8px 12px; margin-bottom: 8px; }
+.product .photos { margin-bottom: 6px; }
+.product .muted { line-height: 1.4; font-size: 14px; }
+.product .head { gap: 8px; }
+.product-actions { margin-top: 4px; gap: 6px; }
+.product-actions .check { min-height: 28px; gap: 8px; }
+.product-actions .check input { width: 18px; height: 18px; }
+.product-actions .btn.small { min-height: 28px; padding: 0 10px; }
