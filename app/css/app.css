@@ -4,7 +4,7 @@
   --text: #1c2430;
   --muted: #6b7684;
   --line: #e2e6ee;
-  --primary: #2f6fde;
+  --primary: #4a86ea;
   --primary-ink: #ffffff;
   --danger: #d23b3b;
   --st-todo: #8a94a3;
@@ -22,7 +22,7 @@
     --text: #e6eaf0;
     --muted: #97a1b0;
     --line: #2c3442;
-    --primary: #5b8ef0;
+    --primary: #6c9cf3;
     --shadow: none;
   }
 }
@@ -360,3 +360,13 @@ body.picker-open { overflow: hidden; }
 .form-compact .icon-btn { flex: none; width: 40px; padding: 0; justify-content: center; }
 .photo-grid.small { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; margin: 6px 0 0; }
 .photo-grid.small .del { width: 22px; height: 22px; font-size: 12px; top: 2px; right: 2px; }
+
+/* 新建采购项目：导入清单 */
+.import-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.import-bar .btn { gap: 6px; }
+.import-bar .icon { width: 18px; height: 18px; }
+.import-list { margin: 8px 0; padding: 0; list-style: none; counter-reset: imp; max-height: 50vh; overflow: auto; }
+.import-list li { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--line); counter-increment: imp; }
+.import-list li::before { content: counter(imp) "."; flex: none; width: 24px; text-align: right; color: var(--muted); align-self: flex-start; padding-top: 1px; }
+.import-list li .main { flex: 1; min-width: 0; }
+.import-list .del-x { flex: none; border: 0; background: none; color: var(--muted); font-size: 16px; width: 30px; height: 30px; cursor: pointer; }

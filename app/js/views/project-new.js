@@ -4,8 +4,10 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, $$, toast } from '../ui.js';
+import { esc, $, $$, toast, ICONS } from '../ui.js';
 import { dateField, bindDateFields } from '../datepicker.js';
+import { categoryLabel } from '../templates.js';
+import { getLang } from '../i18n.js';
 
 export const PROJECT_TYPES = ['procurement', 'exhibition'];
 export const projectType = p => (p?.type === 'exhibition' ? 'exhibition' : 'procurement');
@@ -60,7 +62,15 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
   const v = k => esc(project[k] ?? '');
   const field = (k, label, extra = '') => `<label class="field"><span>${esc(t(label))}</span><input type="text" name="${k}" value="${v(k)}" ${extra}></label>`;
 
+  const canImport = isNew && type === 'procurement'; // 新建采购项目时可导入清单
+  let imported = []; // 导入的清单物品，创建项目时一起保存
+
   app.innerHTML = `
+    ${canImport ? `<div class="import-bar">
+      <label class="btn small">${ICONS.importDoc}${esc(t('importList'))}<input type="file" id="list-file" accept=".xlsx,.xlsm,.docx,.csv,.txt" hidden></label>
+      <span class="muted">${esc(t('importListHint'))}</span>
+    </div>
+    <div id="import-preview"></div>` : ''}
     <form id="form" class="card" autocomplete="off">
       ${isNew ? '' : `<div class="field"><span>${esc(t('projectType'))}</span>
         <div class="seg seg2">${PROJECT_TYPES.map(ty => `<button type="button" data-type="${ty}" class="${ty === type ? 'on st-done' : ''}">${esc(t('ptype_' + ty))}</button>`).join('')}</div></div>`}
@@ -106,6 +116,47 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
   const form = $('#form');
   bindDateFields(form);
 
+  // —— 导入采购清单 ——
+  const lang = getLang();
+  function paintImport(fileName) {
+    const box = $('#import-preview');
+    if (!imported.length) { box.innerHTML = ''; return; }
+    box.innerHTML = `<div class="card import-card">
+      <div class="row"><h2 style="margin:0">${esc(t('importedItems', { n: imported.length }))}</h2><span class="spacer"></span>
+        <button type="button" class="btn small" id="import-clear">${esc(t('importClear'))}</button></div>
+      ${fileName ? `<div class="muted">${esc(fileName)}</div>` : ''}
+      <ol class="import-list">${imported.map((it, i) => `<li>
+        <div class="main"><b>${esc(it.name)}</b>${it.qty ? ` ×${esc(it.qty)}` : ''}
+          <div class="muted">${esc([categoryLabel(it.category, lang), it.fields.room, it.fields.size].filter(Boolean).join(' · '))}</div></div>
+        <button type="button" class="del-x" data-rm="${i}" aria-label="${esc(t('delete'))}">✕</button></li>`).join('')}</ol>
+      <div class="muted">${esc(t('importReviewHint'))}</div>
+    </div>`;
+    $('#import-clear').onclick = () => { imported = []; paintImport(); };
+    box.querySelector('.import-list').onclick = e => {
+      const b = e.target.closest('[data-rm]');
+      if (b) { imported.splice(Number(b.dataset.rm), 1); paintImport(fileName); }
+    };
+  }
+  if (canImport) $('#list-file').onchange = async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    toast(t('importReading'));
+    try {
+      const { importListFile } = await import('../import-list.js');
+      const items = await importListFile(file);
+      if (!items.length) { toast(t('importNone')); return; }
+      imported = items;
+      paintImport(file.name);
+      // 项目名称还空着：用文件名
+      if (!form.pname.value.trim()) form.pname.value = file.name.replace(/\.[^.]+$/, '');
+      toast(t('importedItems', { n: items.length }));
+    } catch (err) {
+      console.error(err);
+      toast(err.message === 'OLD_FORMAT' ? t('importOldFormat') : err.message === 'UNSUPPORTED' ? t('importUnsupported') : t('importFailed'));
+    }
+  };
+
   // 切换类型（编辑时）：显示/隐藏对应字段
   function applyType() {
     const ex = type === 'exhibition';
@@ -144,6 +195,11 @@ export async function renderProjectNew(app, { pid }, ctx, query = {}) {
       rec.purpose = val('purpose');
     }
     const saved = await db.put('projects', rec);
+    // 导入的清单物品
+    const base = Date.now();
+    for (let i = 0; i < imported.length; i++) {
+      await db.put('items', { ...imported[i], projectId: saved.id, status: 'todo', order: base + i });
+    }
     const n = await copySuppliers($$('[name=src]:checked', form).map(x => x.value), saved.id);
     toast(n ? t('suppliersImported', { n }) : t('saved'));
     ctx.nav('/p/' + saved.id, true);

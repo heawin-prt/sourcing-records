@@ -6,7 +6,7 @@ import { esc, $, confirmDialog } from '../ui.js';
 import { projectSummary, projectType } from './project-new.js';
 import { openPicker } from '../picker.js';
 
-const SORTS = ['date', 'dateAsc', 'procurement', 'exhibition', 'name'];
+const SORTS = ['date', 'dateAsc', 'name', 'procurement', 'exhibition'];
 const byName = (a, b) => (a.name || '').localeCompare(b.name || '', 'zh');
 // 日期：项目日期新的在前（没填日期的按创建时间）
 const dateOf = p => p.date || (p.createdAt || '').slice(0, 10);
@@ -14,9 +14,9 @@ const byDate = (a, b) => dateOf(b).localeCompare(dateOf(a)) || byName(a, b);
 const SORT_FN = {
   date: byDate,                       // 日期倒序：新的在前
   dateAsc: (a, b) => byDate(b, a),     // 日期顺序：旧的在前
-  // 按类型：选中的类型排在上面，其余在下面；每组内日期新的在前
-  procurement: (a, b) => (projectType(a) !== 'procurement') - (projectType(b) !== 'procurement') || byDate(a, b),
-  exhibition: (a, b) => (projectType(a) !== 'exhibition') - (projectType(b) !== 'exhibition') || byDate(a, b),
+  // 按类型：只显示该类型的项目，日期新的在前
+  procurement: byDate,
+  exhibition: byDate,
   name: byName,
 };
 
@@ -27,13 +27,15 @@ export async function renderProjects(app, _params, ctx) {
   let sort = await db.getMeta('projectSort', 'date');
   if (sort === 'type') sort = 'procurement'; // 旧设置
   if (!SORTS.includes(sort)) sort = 'date';
-  const projects = (await db.listProjects()).sort(SORT_FN[sort]);
+  const all = await db.listProjects();
+  const typeFilter = sort === 'procurement' || sort === 'exhibition' ? sort : null;
+  const projects = all.filter(p => !typeFilter || projectType(p) === typeFilter).sort(SORT_FN[sort]);
   const counts = {};
   for (const p of projects) counts[p.id] = (await db.listByProject('items', p.id)).length;
 
   app.innerHTML = `
     <div class="row section-row"><div class="section-title">${esc(t('projectsHeading'))}</div><span class="spacer"></span>
-      ${projects.length > 1 ? `<button type="button" class="btn small" id="sort">${esc(t('sortBy'))}: ${esc(t('sort_' + sort))} ▾</button>` : ''}</div>
+      ${all.length > 1 || typeFilter ? `<button type="button" class="btn small" id="sort">${esc(t('sortBy'))}: ${esc(t('sort_' + sort))} ▾</button>` : ''}</div>
     ${projects.length ? projects.map(p => `
       <div class="list-item" data-open="${esc(p.id)}">
         <div class="main">
@@ -46,7 +48,7 @@ export async function renderProjects(app, _params, ctx) {
         </div>
         <button class="btn small" data-edit="${esc(p.id)}">${esc(t('edit'))}</button>
         <button class="btn small danger" data-del="${esc(p.id)}">${esc(t('delete'))}</button>
-      </div>`).join('') : `<p class="empty">${esc(t('noProjects'))}</p>`}
+      </div>`).join('') : `<p class="empty">${esc(typeFilter ? t('noProjectsOfType', { type: t('ptype_' + typeFilter) }) : t('noProjects'))}</p>`}
     <button class="btn primary fab" id="new-project">+ ${esc(t('newProject'))}</button>
   `;
 

@@ -17,7 +17,7 @@ export function rowAmount(it, p) {
 }
 
 let excelJsPromise = null;
-function loadExcelJs() {
+export function loadExcelJs() {
   if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
   excelJsPromise ||= new Promise((resolve, reject) => {
     const s = document.createElement('script');
