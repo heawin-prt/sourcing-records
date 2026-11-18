@@ -5,7 +5,7 @@ import { t, getLang } from './i18n.js';
 import { CATEGORIES, COMMON_FIELDS, label, categoryLabel, isBuiltinCategory } from './templates.js';
 import { fmtDateTime, itemTitle } from './ui.js';
 import { projectType } from './views/project-new.js';
-import { productFx, fmtProductPrice } from './fx.js';
+import { productFx, fmtProductPrice, productPrice } from './fx.js';
 
 /** 行金额 = 单价 × 数量（产品数量优先，没有则用清单数量）。 */
 export function rowQty(it, p) {
@@ -63,7 +63,8 @@ export const COLUMNS = [
   { key: 'model', label: () => t('model'), group: 'product', width: 14, get: (it, p) => p?.model ?? '' },
   { key: 'priceQuoted', label: () => t('colPriceQuoted'), group: 'product', width: 14, get: (it, p) => fmtProductPrice(p) },
   { key: 'priceCny', label: () => t('priceCny'), group: 'product', width: 12, num: true, money: true, get: (it, p) => p?.priceCny ?? '' },
-  { key: 'priceFx', label: () => t('colFx'), group: 'product', width: 14, get: (it, p) => productFx(p) },
+  // 换算币种和报价币种相同时，这一列直接写报价（不留空）
+  { key: 'priceFx', label: () => t('colFx'), group: 'product', width: 14, get: (it, p) => productFx(p) || (p?.fxCurrency && p.fxCurrency === productPrice(p).currency ? fmtProductPrice(p) : '') },
   { key: 'productQty', label: () => t('colQty'), group: 'product', width: 8, num: true, get: (it, p) => rowQty(it, p) ?? '' },
   // 小计 = 单价 × 数量；导出时写成 Excel 公式
   { key: 'amount', label: () => t('colSubtotal'), group: 'product', width: 13, num: true, money: true, get: (it, p) => rowAmount(it, p) ?? '' },
