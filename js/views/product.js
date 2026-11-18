@@ -10,6 +10,7 @@ import { processPhoto } from '../photo.js';
 import { FX_CURRENCIES, getRates, convert } from '../fx.js';
 import { dateField, bindDateFields, refreshDateField } from '../datepicker.js';
 import { projectType } from './project-new.js';
+import { openPicker } from '../picker.js';
 
 const TEXT_FIELDS = ['material', 'size', 'color', 'quality'];
 
@@ -21,6 +22,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   if (!isNew && !stored) return ctx.nav(`/p/${pid}/item/${iid}`, true);
   const backPath = `/p/${pid}/item/${iid}`;
   const expo = projectType(await db.get('projects', pid)) === 'exhibition'; // 展会：展位信息，没有市场名称
+  const prev = await inputHistory(expo, prid);
   const draftKey = `draft:${prid || 'new:' + iid}`;
 
   // 状态：先取草稿，没有草稿再取已保存的记录
@@ -89,10 +91,16 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
           <button type="button" class="btn" id="new-sup">${esc(t('newSupplier'))}</button>
         </div>
       </div>
-      ${expo ? '' : `<label class="field"><span>${esc(t('marketName'))}</span><input type="text" name="marketName" value="${esc(p.marketName ?? '')}"></label>`}
+      ${expo ? '' : `<div class="field"><span>${esc(t('marketName'))}</span><div class="row shop-row">
+        <textarea name="marketName" rows="1">${esc(p.marketName ?? '')}</textarea>
+        ${prev.markets.length ? `<button type="button" class="btn icon-btn" id="pick-market" aria-label="${esc(t('pickPrevious'))}">▾</button>` : ''}
+        <label class="btn icon-btn" title="${esc(t('marketPhoto'))}" aria-label="${esc(t('marketPhoto'))}">${ICONS.camera}<input type="file" accept="image/*" capture="environment" id="market-cam" hidden></label>
+      </div>
+      <div class="photo-grid small" id="market-photos"></div></div>`}
       <div class="field"><span>${esc(t(expo ? 'standInfo' : 'shopInfo'))}</span>
         <div class="row shop-row">
           <textarea name="shopInfo" rows="1" placeholder="${esc(t(expo ? 'standInfoHint' : 'shopInfoHint'))}">${esc(p.shopInfo ?? '')}</textarea>
+          ${prev.shops.length ? `<button type="button" class="btn icon-btn" id="pick-shop" aria-label="${esc(t('pickPrevious'))}">▾</button>` : ''}
           <label class="btn icon-btn" title="${esc(t('shopPhoto'))}" aria-label="${esc(t('shopPhoto'))}">${ICONS.camera}<input type="file" accept="image/*" capture="environment" id="shop-cam" hidden></label>
         </div>
         <div class="photo-grid small" id="shop-photos"></div>
@@ -127,7 +135,8 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   // —— 照片 ——
   // 两组照片：产品照片 photoIds（顶部拍照/相册）和店铺/展位照片 shopPhotoIds（店铺信息旁的相机）
   if (!p.shopPhotoIds) p.shopPhotoIds = [];
-  const GRID = { photoIds: '#photos', shopPhotoIds: '#shop-photos' };
+  if (!p.marketPhotoIds) p.marketPhotoIds = [];
+  const GRID = { photoIds: '#photos', marketPhotoIds: '#market-photos', shopPhotoIds: '#shop-photos' };
   async function renderPhotos() {
     for (const [key, sel] of Object.entries(GRID)) {
       const html = [];
@@ -135,7 +144,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         const ph = await db.get('photos', id);
         if (ph) html.push(`<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" alt=""><button type="button" class="del" data-del-photo="${esc(id)}" data-key="${key}">✕</button></div>`);
       }
-      $(sel).innerHTML = html.join('');
+      if ($(sel)) $(sel).innerHTML = html.join(''); // 展会项目没有市场信息
     }
   }
 
@@ -156,6 +165,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   $('#cam').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
   $('#album').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
   $('#shop-cam').onchange = e => { addFiles([...e.target.files], 'shopPhotoIds'); e.target.value = ''; };
+  if ($('#market-cam')) $('#market-cam').onchange = e => { addFiles([...e.target.files], 'marketPhotoIds'); e.target.value = ''; };
   const onDelPhoto = async e => {
     const b = e.target.closest('[data-del-photo]');
     if (!b || !await confirmDialog(t('deletePhoto'))) return;
@@ -169,6 +179,28 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   };
   $('#photos').onclick = onDelPhoto;
   $('#shop-photos').onclick = onDelPhoto;
+  if ($('#market-photos')) $('#market-photos').onclick = onDelPhoto;
+
+  // —— 市场名称 / 店铺信息：从以前输入过的内容里选 ——
+  const fill = (name, v) => { form.elements[name].value = v; form.elements[name].classList.remove('ocr-filled'); autoGrow(form); collect(); saveDraft(); };
+  const pickMarket = $('#pick-market');
+  if (pickMarket) pickMarket.onclick = () => openPicker({
+    title: t('pickPrevious'), searchPlaceholder: t('marketName'),
+    options: prev.markets.map(m => ({ value: m, label: m })),
+    selected: form.marketName.value.trim(),
+    onPick: v => fill('marketName', v),
+  });
+  const pickShop = $('#pick-shop');
+  if (pickShop) pickShop.onclick = () => openPicker({
+    title: t('pickPrevious'), searchPlaceholder: t(expo ? 'standInfo' : 'shopInfo'),
+    options: prev.shops.map((s, i) => ({ value: String(i), label: s.shop, sub: s.market })),
+    onPick: v => {
+      const s = prev.shops[Number(v)];
+      fill('shopInfo', s.shop);
+      // 店铺带出它所在的市场（市场名称空着时）
+      if (s.market && form.marketName && !form.marketName.value.trim()) fill('marketName', s.market);
+    },
+  });
 
   // —— 记录时间 ——
   function setTime(iso) {
@@ -267,8 +299,8 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     await db.put('products', p);
     // 编辑时删掉的旧照片，保存后才真正删除
     if (stored) {
-      const keep = new Set([...p.photoIds, ...p.shopPhotoIds]);
-      for (const id of [...(stored.photoIds || []), ...(stored.shopPhotoIds || [])]) if (!keep.has(id)) await db.remove('photos', id);
+      const keep = new Set([...p.photoIds, ...p.shopPhotoIds, ...p.marketPhotoIds]);
+      for (const id of [...(stored.photoIds || []), ...(stored.shopPhotoIds || []), ...(stored.marketPhotoIds || [])]) if (!keep.has(id)) await db.remove('photos', id);
     }
     // 物品有了第一个候选产品，进度从"未开始"自动改成"待决定"
     if ((item.status || 'todo') === 'todo') {
@@ -289,10 +321,32 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   if (!isNew) $('#del').onclick = async () => {
     if (!await confirmDialog(t('confirmDeleteProduct'))) return;
     await clearDraft();
-    await db.removeProduct({ ...p, photoIds: [...new Set([...(stored.photoIds || []), ...p.photoIds, ...(stored.shopPhotoIds || []), ...p.shopPhotoIds])], shopPhotoIds: [] });
+    await db.removeProduct({ ...p, photoIds: [...new Set([...(stored.photoIds || []), ...p.photoIds, ...(stored.shopPhotoIds || []), ...p.shopPhotoIds, ...(stored.marketPhotoIds || []), ...p.marketPhotoIds])], shopPhotoIds: [], marketPhotoIds: [] });
     ctx.nav(backPath, true);
   };
 
   renderPhotos();
   if (picked) flushDraft(); // 把新选中的供应商写进草稿，页面被系统回收后也不丢
+}
+
+/**
+ * 以前输入过的市场名称和店铺/展位信息（同类型的所有项目，最近的在前，去重）。
+ */
+async function inputHistory(expo, currentId) {
+  const projects = (await db.listProjects()).filter(pr => (projectType(pr) === 'exhibition') === expo);
+  const markets = new Map(), shops = new Map();
+  for (const pr of projects) {
+    for (const p of await db.listByProject('products', pr.id)) {
+      if (p.id === currentId) continue;
+      const when = p.updatedAt || '';
+      const m = (p.marketName || '').trim();
+      if (m && !(markets.get(m) >= when)) markets.set(m, when);
+      const s = (p.shopInfo || '').trim();
+      if (s && !(shops.get(s)?.when >= when)) shops.set(s, { shop: s, market: m, when });
+    }
+  }
+  return {
+    markets: [...markets].sort((a, b) => b[1].localeCompare(a[1])).map(([m]) => m),
+    shops: [...shops.values()].sort((a, b) => b.when.localeCompare(a.when)),
+  };
 }
