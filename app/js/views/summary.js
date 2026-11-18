@@ -26,10 +26,7 @@ export async function loadProject(projectId) {
   return { project, items, products, suppliers, supplierMap };
 }
 
-/** 物品的代表照片 id：优先已选定产品，其次最高分产品。 */
+/** 项目开始页物品左边的图片：只用物品自带的图片；没有就返回 null（显示默认图标）。 */
 export function coverPhotoId(item) {
-  const p = item._chosen[0] || item._best;
-  if (p && p.photoIds && p.photoIds.length) return p.photoIds[0];
-  for (const q of item._products) if (q.photoIds && q.photoIds.length) return q.photoIds[0];
-  return item.photoIds?.[0] || null; // 没有产品照片时用物品自己的图片
+  return item.photoIds?.[0] || null;
 }
