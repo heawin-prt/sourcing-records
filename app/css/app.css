@@ -346,3 +346,10 @@ body.picker-open { overflow: hidden; }
 /* 项目列表标题行：右侧排列按钮 */
 .section-row { align-items: center; margin-bottom: 10px; }
 .section-row .section-title { margin: 0; }
+
+/* C51：记录产品页分三个组团，各用不同底色的圆角框；拍照/相册不再套框 */
+.photo-area { margin-bottom: 12px; }
+.grp { padding: 10px 12px 4px; margin-bottom: 10px; }
+.grp-a { background: color-mix(in srgb, var(--primary) 9%, var(--card)); border-color: color-mix(in srgb, var(--primary) 25%, var(--line)); }
+.grp-b { background: color-mix(in srgb, var(--st-pending) 9%, var(--card)); border-color: color-mix(in srgb, var(--st-pending) 25%, var(--line)); }
+.grp-c { background: color-mix(in srgb, var(--st-done) 8%, var(--card)); border-color: color-mix(in srgb, var(--st-done) 22%, var(--line)); }
