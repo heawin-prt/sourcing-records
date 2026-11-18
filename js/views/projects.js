@@ -3,10 +3,10 @@
 import * as db from '../db.js';
 import { t } from '../i18n.js';
 import { esc, $, confirmDialog } from '../ui.js';
-import { projectSummary, projectType, PROJECT_TYPES } from './project-new.js';
+import { projectSummary, projectType } from './project-new.js';
 import { openPicker } from '../picker.js';
 
-const SORTS = ['date', 'dateAsc', 'type', 'name'];
+const SORTS = ['date', 'dateAsc', 'procurement', 'exhibition', 'name'];
 const byName = (a, b) => (a.name || '').localeCompare(b.name || '', 'zh');
 // 日期：项目日期新的在前（没填日期的按创建时间）
 const dateOf = p => p.date || (p.createdAt || '').slice(0, 10);
@@ -14,7 +14,9 @@ const byDate = (a, b) => dateOf(b).localeCompare(dateOf(a)) || byName(a, b);
 const SORT_FN = {
   date: byDate,                       // 日期倒序：新的在前
   dateAsc: (a, b) => byDate(b, a),     // 日期顺序：旧的在前
-  type: (a, b) => PROJECT_TYPES.indexOf(projectType(a)) - PROJECT_TYPES.indexOf(projectType(b)) || byDate(a, b),
+  // 按类型：选中的类型排在上面，其余在下面；每组内日期新的在前
+  procurement: (a, b) => (projectType(a) !== 'procurement') - (projectType(b) !== 'procurement') || byDate(a, b),
+  exhibition: (a, b) => (projectType(a) !== 'exhibition') - (projectType(b) !== 'exhibition') || byDate(a, b),
   name: byName,
 };
 
@@ -23,6 +25,7 @@ export async function renderProjects(app, _params, ctx) {
   $('#go-settings').onclick = () => ctx.nav('/settings');
 
   let sort = await db.getMeta('projectSort', 'date');
+  if (sort === 'type') sort = 'procurement'; // 旧设置
   if (!SORTS.includes(sort)) sort = 'date';
   const projects = (await db.listProjects()).sort(SORT_FN[sort]);
   const counts = {};
