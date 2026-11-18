@@ -342,3 +342,7 @@ body.picker-open { overflow: hidden; }
 .photo-grid:empty { display: none; }
 .cat-row { gap: 4px; }
 .cat-row .btn { padding: 0 10px; }
+
+/* 项目列表标题行：右侧排列按钮 */
+.section-row { align-items: center; margin-bottom: 10px; }
+.section-row .section-title { margin: 0; }
