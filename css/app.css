@@ -393,3 +393,8 @@ body.picker-open { overflow: hidden; }
 /* 币种下拉的字体与字段标题（如 Price）一致 */
 .form-compact .price-row select { font-size: 13px; font-family: inherit; }
 .rec-time { font-size: 13px; padding: 2px 0 8px; }
+
+/* 物品页产品卡片（按用户截图）：第一行 品名·型号 + 右侧星级；最后一行 选定 + 编辑 */
+.product-top { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+.product-top .product-name { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.product-top .stars { flex: none; font-size: 18px; letter-spacing: 2px; }
