@@ -50,8 +50,8 @@ export async function renderSupplierList(app, { pid }, ctx) {
           <div class="meta">
             ${s.booth ? `<span>${esc(s.booth)}</span>` : ''}
             ${s.storeLocation ? `<span>${esc(s.storeLocation)}</span>` : ''}
-            ${s.phone ? `<span>${esc(s.phone)}</span>` : ''}
             ${s.contact ? `<span>${esc(s.contact)}</span>` : ''}
+            ${s.phone ? `<span>${esc(s.phone)}</span>` : ''}
             <span>${esc(t('productsCount', { n: used[s.id] || 0 }))}</span>
           </div>
           ${s.mainProducts ? `<div class="meta desc">${esc(s.mainProducts)}</div>` : ''}
