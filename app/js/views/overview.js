@@ -3,7 +3,7 @@
 import * as db from '../db.js';
 import { t, getLang } from '../i18n.js';
 import { categoryLabel } from '../templates.js';
-import { esc, $, blobUrl, releaseUrls, stars, STATUSES, itemTitle, itemTitleHtml, ICONS } from '../ui.js';
+import { esc, $, blobUrl, releaseUrls, stars, STATUSES, itemTitle, itemTitleHtml, ICONS, openStatusMenu, toast } from '../ui.js';
 import { openPicker } from '../picker.js';
 import { loadProject, coverPhotoId } from './summary.js';
 import { projectSummary } from './project-new.js';
@@ -119,13 +119,28 @@ export async function renderOverview(app, { pid }, ctx) {
               ${it._chosen.length ? `<span>✓ ${esc(t('chosenMark'))}</span>` : ''}
             </div>
           </div>
-          <span class="chip st-${st}">${esc(t('status_' + st))}</span>
+          <button type="button" class="chip chip-btn st-${st}" data-item-st="${esc(it.id)}">${esc(t('status_' + st))} ▾</button>
         </div>`;
       }).join('');
   };
   renderList();
 
   app.onclick = e => {
+    // 物品右边的状态：点开小菜单改成其它状态（顶部各状态的数量和筛选随之更新，页面位置不变）
+    const stBtn = e.target.closest('[data-item-st]');
+    if (stBtn) {
+      const it = items.find(x => x.id === stBtn.dataset.itemSt);
+      openStatusMenu(stBtn, it.status || 'todo', async st => {
+        const raw = await db.get('items', it.id);
+        await db.put('items', { ...raw, status: st });
+        await db.touchProject(pid);
+        const y = window.scrollY;
+        await renderOverview(app, { pid }, ctx);
+        window.scrollTo(0, y);
+        toast(t('saved'));
+      });
+      return;
+    }
     const fb = e.target.closest('[data-filter]');
     // 再点一次已选中的状态 = 取消筛选
     if (fb) { f.status = f.status === fb.dataset.filter ? 'all' : fb.dataset.filter; renderOverview(app, { pid }, ctx); return; }
