@@ -5,7 +5,7 @@ import { t, getLang } from './i18n.js';
 import { CATEGORIES, COMMON_FIELDS, label, categoryLabel, isBuiltinCategory } from './templates.js';
 import { fmtDateTime, itemTitle } from './ui.js';
 import { projectType } from './views/project-new.js';
-import { productFx, fmtProductPrice, productPrice } from './fx.js';
+import { productFx, fmtProductPrice, productPrice, fmtFx } from './fx.js';
 
 /** 行金额 = 单价 × 数量（产品数量优先，没有则用清单数量）。 */
 export function rowQty(it, p) {
@@ -68,7 +68,8 @@ export const COLUMNS = [
   { key: 'priceNote', label: () => t('colPriceNote'), group: 'product', width: 16, get: (it, p) => p?.priceNote ?? '' },
   // 新增的价格：每个一行，"报价（≈ ¥）· 备注"
   { key: 'otherPrices', label: () => t('colOtherPrices'), group: 'product', width: 24, get: (it, p) => (p?.extraPrices || []).map(x => [
-    fmtProductPrice({ price: x.price, priceCurrency: x.currency }) + (x.currency !== 'CNY' && x.cny != null ? ` (≈ ¥${Number(x.cny).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : ''),
+    fmtProductPrice({ price: x.price, priceCurrency: x.currency }) + (x.currency !== 'CNY' && x.cny != null ? ` (≈ ¥${Number(x.cny).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : '')
+      + (x.fxCurrency && x.fxCurrency !== x.currency && x.fxCurrency !== 'CNY' && x.fx != null ? ` (≈ ${fmtFx(x.fx, x.fxCurrency)})` : ''),
     x.note,
   ].filter(Boolean).join(' · ')).join('\n') },
   { key: 'productQty', label: () => t('colQty'), group: 'product', width: 8, num: true, get: (it, p) => rowQty(it, p) ?? '' },

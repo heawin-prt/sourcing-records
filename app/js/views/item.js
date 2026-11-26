@@ -7,7 +7,7 @@ import { esc, $, $$, blobUrl, fmtMoney, fmtDateTime, stars, toast, confirmDialog
 import { FX_CURRENCIES } from '../fx.js';
 import { openPicker } from '../picker.js';
 import { loadProject } from './summary.js';
-import { productFx, fmtProductPrice, productPrice } from '../fx.js';
+import { productFx, fmtProductPrice, productPrice, fmtFx } from '../fx.js';
 import { processPhoto } from '../photo.js';
 
 export async function renderItem(app, { pid, iid }, ctx) {
@@ -269,7 +269,8 @@ export function fieldText(item, fd) {
 function extraPriceText(x) {
   const price = fmtProductPrice({ price: x.price, priceCurrency: x.currency });
   const cny = x.currency !== 'CNY' && x.cny != null ? ` ≈ ${fmtMoney(x.cny)}` : '';
-  return [price && price + cny, x.note].filter(Boolean).join(' · ');
+  const fx = x.fxCurrency && x.fxCurrency !== x.currency && x.fxCurrency !== 'CNY' && x.fx != null ? ` ≈ ${fmtFx(x.fx, x.fxCurrency)}` : '';
+  return [price && price + cny + fx, x.note].filter(Boolean).join(' · ');
 }
 
 /** 产品卡片的说明行：没有内容的行不显示（不留空行）。 */

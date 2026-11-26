@@ -485,7 +485,7 @@ img[data-ph] { cursor: zoom-in; }
 .note-plus-row { margin-top: 4px; }
 .note-plus-row input, .note-plus-row textarea { flex: 1; min-width: 0; }
 .form-compact .plus-btn { font-size: 20px; font-weight: 600; line-height: 1; color: var(--primary); }
-.extra-price { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.extra-price { margin-top: 6px; }
 .extra-prices-line { font-size: 14px; margin: 2px 0 4px; }
 .product-card .price-note, .head .price-note { font-size: 13px; }
 
