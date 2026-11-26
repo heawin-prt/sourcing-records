@@ -24,14 +24,14 @@ export async function renderItem(app, { pid, iid }, ctx) {
   const itemPhotoUrls = [];
   for (const phId of item.photoIds || []) {
     const ph = await db.get('photos', phId);
-    if (ph) itemPhotoUrls.push(blobUrl(ph.thumb));
+    if (ph) itemPhotoUrls.push({ u: blobUrl(ph.thumb), id: phId });
   }
   const photoUrls = {};
   for (const p of item._products) {
     photoUrls[p.id] = [];
     for (const phId of p.photoIds || []) {
       const ph = await db.get('photos', phId);
-      if (ph) photoUrls[p.id].push(blobUrl(ph.thumb));
+      if (ph) photoUrls[p.id].push({ u: blobUrl(ph.thumb), id: phId });
     }
   }
 
@@ -45,7 +45,7 @@ export async function renderItem(app, { pid, iid }, ctx) {
 
     <div class="card">
       <h2>${esc(t('listInfo'))}</h2>
-      ${itemPhotoUrls.length ? `<div class="item-photos">${itemPhotoUrls.map(u => `<img src="${u}" alt="">`).join('')}</div>` : ''}
+      ${itemPhotoUrls.length ? `<div class="item-photos">${itemPhotoUrls.map(x => `<img src="${x.u}" data-ph="${esc(x.id)}" alt="">`).join('')}</div>` : ''}
       <dl class="kv">
         <dt>${esc(t('category'))}</dt><dd>${esc(categoryLabel(item.category, lang))}</dd>
         ${item.qty ? `<dt>${esc(t('qty'))}</dt><dd>${esc(item.qty)}</dd>` : ''}
@@ -59,7 +59,7 @@ export async function renderItem(app, { pid, iid }, ctx) {
       const sup = data.supplierMap[p.supplierId];
       return `
       <div class="card product ${p.chosen ? 'chosen' : ''}">
-        ${photoUrls[p.id].length ? `<div class="photos">${photoUrls[p.id].map(u => `<img src="${u}" alt="">`).join('')}</div>` : ''}
+        ${photoUrls[p.id].length ? `<div class="photos">${photoUrls[p.id].map(x => `<img src="${x.u}" data-ph="${esc(x.id)}" alt="">`).join('')}</div>` : ''}
         ${p.name || p.model || p.rating ? `<div class="product-top">
           <span class="product-name">${esc([p.name, p.model].filter(Boolean).join(' · '))}</span>
           ${p.rating ? `<span class="stars">${stars(p.rating)}</span>` : ''}
@@ -173,7 +173,7 @@ export async function renderItemForm(app, { pid, iid }, ctx) {
     const html = [];
     for (const id of item.photoIds) {
       const ph = await db.get('photos', id);
-      if (ph) html.push(`<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" alt=""><button type="button" class="del" data-del-photo="${esc(id)}">✕</button></div>`);
+      if (ph) html.push(`<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" data-ph="${esc(id)}" alt=""><button type="button" class="del" data-del-photo="${esc(id)}">✕</button></div>`);
     }
     $('#item-photos').innerHTML = html.join('');
   }

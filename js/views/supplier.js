@@ -141,7 +141,7 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
 
   async function renderCard() {
     const ph = cardPhotoId && await db.get('photos', cardPhotoId);
-    $('#card').innerHTML = ph ? `<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" alt=""><button type="button" class="del" id="del-card">✕</button></div>` : '';
+    $('#card').innerHTML = ph ? `<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" data-ph="${esc(ph.id)}" alt=""><button type="button" class="del" id="del-card">✕</button></div>` : '';
     const d = $('#del-card');
     if (d) d.onclick = async () => {
       if (!await confirmDialog(t('deletePhoto'))) return;

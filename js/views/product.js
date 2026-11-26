@@ -149,7 +149,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
       const html = [];
       for (const id of p[key]) {
         const ph = await db.get('photos', id);
-        if (ph) html.push(`<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" alt=""><button type="button" class="del" data-del-photo="${esc(id)}" data-key="${key}">✕</button></div>`);
+        if (ph) html.push(`<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" data-ph="${esc(id)}" alt=""><button type="button" class="del" data-del-photo="${esc(id)}" data-key="${key}">✕</button></div>`);
       }
       if ($(sel)) $(sel).innerHTML = html.join(''); // 展会项目没有市场信息
     }

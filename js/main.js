@@ -14,6 +14,7 @@ import { renderProducts } from './views/products.js';
 import { importBundledProjects } from './seed.js';
 import { renderProjectNew } from './views/project-new.js';
 import { renderTrash } from './views/trash.js';
+import { initPhotoViewer } from './viewer.js';
 
 // 路由表：模式 → 页面函数。参数用 :name 表示。
 const ROUTES = [
@@ -99,6 +100,7 @@ async function init() {
     navigator.storage.persist().catch(() => {});
   }
   window.addEventListener('hashchange', route);
+  initPhotoViewer();
   await route();
 }
 
