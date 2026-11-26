@@ -36,7 +36,8 @@ export async function renderSupplierList(app, { pid }, ctx) {
 
   const thumbs = {};
   for (const s of suppliers) {
-    const ph = s.cardPhotoId && await db.get('photos', s.cardPhotoId);
+    const id = s.cardPhotoId || s.photoIds?.[0];
+    const ph = id && await db.get('photos', id);
     if (ph) thumbs[s.id] = blobUrl(ph.thumb);
   }
 
@@ -94,6 +95,14 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
         <label class="btn">${ICONS.album}${esc(t('fromAlbum'))}<input type="file" accept="image/*" id="album" hidden></label>
       </div>
       <div class="muted" id="ocr-status"></div>
+    </div>
+    <div class="card">
+      <h2>${esc(t('supPhotos'))}</h2>
+      <div class="photo-grid" id="sup-photos"></div>
+      <div class="photo-btns">
+        <label class="btn primary">${ICONS.camera}${esc(t('takePhoto'))}<input type="file" accept="image/*" capture="environment" id="sup-cam" hidden></label>
+        <label class="btn">${ICONS.album}${esc(t('fromAlbum'))}<input type="file" accept="image/*" multiple id="sup-album" hidden></label>
+      </div>
     </div>
     <form id="form" class="card form-compact" autocomplete="off">
       ${SUP_FIELDS.map(f => {
@@ -164,6 +173,41 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
   $('#cam').onchange = e => { addFile(e.target.files[0]); e.target.value = ''; };
   $('#album').onchange = e => { addFile(e.target.files[0]); e.target.value = ''; };
 
+  // —— 其他图片（门店、样品、产品目录等），可多张 ——
+  const storedPhotoIds = [...(sup.photoIds || [])];
+  let photoIds = [...storedPhotoIds];
+  let addedIds = []; // 本次新加、尚未保存的
+  async function renderPhotos() {
+    const html = [];
+    for (const id of photoIds) {
+      const ph = await db.get('photos', id);
+      if (ph) html.push(`<div class="ph-wrap"><img src="${blobUrl(ph.thumb)}" data-ph="${esc(id)}" alt=""><button type="button" class="del" data-del-photo="${esc(id)}">✕</button></div>`);
+    }
+    $('#sup-photos').innerHTML = html.join('');
+  }
+  async function addPhotos(files) {
+    for (const file of files) {
+      toast(t('processingPhoto'));
+      const { blob, thumb, takenAt } = await processPhoto(file);
+      const ph = await db.put('photos', { projectId: pid, blob, thumb, takenAt });
+      photoIds.push(ph.id);
+      addedIds.push(ph.id);
+    }
+    renderPhotos();
+  }
+  $('#sup-cam').onchange = e => { addPhotos([...e.target.files]); e.target.value = ''; };
+  $('#sup-album').onchange = e => { addPhotos([...e.target.files]); e.target.value = ''; };
+  $('#sup-photos').onclick = async e => {
+    const b = e.target.closest('[data-del-photo]');
+    if (!b || !await confirmDialog(t('deletePhoto'))) return;
+    const id = b.dataset.delPhoto;
+    photoIds = photoIds.filter(x => x !== id);
+    // 新加的立即删；原有的等保存时再删（取消则保留）
+    if (addedIds.includes(id)) { addedIds = addedIds.filter(x => x !== id); await db.remove('photos', id); }
+    renderPhotos();
+  };
+  renderPhotos();
+
   // —— 名片识别：只填空着的字段，已填的不覆盖 ——
   let ocrBusy = false;
   async function runOcr() {
@@ -204,8 +248,10 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
     if (!rec.name) { toast(t('required', { field: t('supplierName') })); form.name.focus(); return; }
     const oldCard = sup.cardPhotoId;
     rec.cardPhotoId = cardPhotoId;
+    rec.photoIds = photoIds;
     const saved = await db.put('suppliers', rec);
     if (oldCard && oldCard !== cardPhotoId) await db.remove('photos', oldCard);
+    for (const id of storedPhotoIds) if (!photoIds.includes(id)) await db.remove('photos', id);
     if (fromProduct) await db.setMeta('pickSupplier', { projectId: pid, id: saved.id });
     toast(t('saved'));
     leave();
@@ -213,6 +259,7 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
 
   $('#cancel').onclick = async () => {
     if (newPhotoId) await db.remove('photos', newPhotoId);
+    for (const id of addedIds) await db.remove('photos', id);
     leave();
   };
 
@@ -220,6 +267,7 @@ export async function renderSupplierForm(app, { pid, sid }, ctx, query = {}) {
     const n = (await db.listByProject('products', pid)).filter(p => p.supplierId === sid).length;
     if (!await confirmDialog(t('confirmDeleteSupplier', { name: sup.name, n }))) return;
     if (sup.cardPhotoId) await db.remove('photos', sup.cardPhotoId);
+    for (const id of new Set([...storedPhotoIds, ...addedIds])) await db.remove('photos', id);
     await db.remove('suppliers', sid);
     ctx.nav(`/p/${pid}/suppliers`, true);
   };
