@@ -2,7 +2,7 @@
 
 import * as db from '../db.js';
 import { t } from '../i18n.js';
-import { esc, $, blobUrl, releaseUrls, fmtMoney, stars, toast, itemTitleHtml, ICONS } from '../ui.js';
+import { esc, $, blobUrl, releaseUrls, fmtMoney, stars, toast, itemTitleHtml, ICONS, openStatusMenu } from '../ui.js';
 import { productFx, fmtProductPrice } from '../fx.js';
 import { loadProject } from './summary.js';
 import { viewSwitch, supplierOptions } from './overview.js';
@@ -52,7 +52,7 @@ export async function renderProducts(app, { pid }, ctx) {
         return `
         <div class="group-head">
           <span class="name">${itemTitleHtml(it)}</span>
-          <span class="chip st-${st}">${esc(t('status_' + st))}</span>
+          <button type="button" class="chip chip-btn st-${st}" data-item-st="${esc(it.id)}">${esc(t('status_' + st))} ▾</button>
         </div>
         ${list.map(p => {
           const sup = supplierMap[p.supplierId];
@@ -97,6 +97,21 @@ export async function renderProducts(app, { pid }, ctx) {
     toast(t('saved'));
   };
   app.onclick = e => {
+    // 物品右边的状态：点开小菜单改成其它状态
+    const stBtn = e.target.closest('[data-item-st]');
+    if (stBtn) {
+      const it = items.find(x => x.id === stBtn.dataset.itemSt);
+      openStatusMenu(stBtn, it.status || 'todo', async st => {
+        const raw = await db.get('items', it.id);
+        await db.put('items', { ...raw, status: st });
+        await db.touchProject(pid);
+        it.status = st;
+        stBtn.className = `chip chip-btn st-${st}`;
+        stBtn.textContent = `${t('status_' + st)} ▾`;
+        toast(t('saved'));
+      });
+      return;
+    }
     if (e.target.closest('.choose')) return; // 点勾选框不进入编辑
     const row = e.target.closest('[data-open]');
     if (row) {
