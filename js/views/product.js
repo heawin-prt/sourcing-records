@@ -35,7 +35,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   if (!draft && !stored) {
     p.priceCurrency = await db.getMeta('lastPriceCurrency', 'CNY');
     p.supplierId = await db.getMeta('lastSupplier:' + pid, null); // 供应商默认为本项目上一条记录所选的
-    p.fxCurrency = project?.fxCurrency ?? await db.getMeta('lastFxCurrency', 'USD'); // 换算币种全项目统一
+    p.fxCurrency = project?.fxCurrency || 'USD'; // 换算币种全项目统一；项目还没定过就默认美元
   }
   // 旧数据只有人民币价格
   if (p.price === undefined) { p.price = p.priceCny ?? null; p.priceCurrency = p.priceCurrency || 'CNY'; }
