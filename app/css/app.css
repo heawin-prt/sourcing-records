@@ -521,3 +521,5 @@ img[data-ph] { cursor: zoom-in; }
 .move-row > span { flex: none; font-size: 13px; color: var(--muted); }
 .form-compact .move-row .pick-btn { min-height: var(--box-h); height: var(--box-h); padding-top: 2px; padding-bottom: 2px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .move-row .pick-btn.moved { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+
+.keep-orig { margin-top: 6px; font-size: 14px; }

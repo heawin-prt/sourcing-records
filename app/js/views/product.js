@@ -143,6 +143,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         <span>${esc(t('moveTo'))}</span>
         <button type="button" class="pick-btn" id="move-to"></button>
       </div>
+      <label class="check tight keep-orig" id="keep-wrap" hidden><input type="checkbox" id="keep-orig">${esc(t('keepInOriginal'))}</label>
      </div>
     </form>
 
@@ -447,7 +448,30 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     await db.setMeta('lastPriceCurrency', p.priceCurrency);
     await db.setMeta('lastSupplier:' + pid, p.supplierId || null);
     await db.setMeta('lastFxCurrency', p.fxCurrency || '');
+    const targetId = p.itemId;
+    const keepOrig = targetId !== iid && $('#keep-orig').checked;
+    if (keepOrig) p.itemId = iid;
     await db.put('products', p);
+    if (keepOrig) {
+      const dupPhotos = async ids => {
+        const out = [];
+        for (const id of ids || []) {
+          const ph = await db.get('photos', id);
+          if (ph) { const { id: _old, createdAt: _c, ...rest } = ph; out.push((await db.put('photos', rest)).id); }
+        }
+        return out;
+      };
+      const { id: _id, createdAt: _ca, createdBy: _cb, ...rest } = p;
+      await db.put('products', {
+        ...rest,
+        itemId: targetId,
+        chosen: false,
+        photoIds: await dupPhotos(p.photoIds),
+        shopPhotoIds: await dupPhotos(p.shopPhotoIds),
+        marketPhotoIds: await dupPhotos(p.marketPhotoIds),
+      });
+      p.itemId = targetId; // 下面按新物品处理进度、跳转
+    }
     // 编辑时删掉的旧照片，保存后才真正删除
     if (stored) {
       const keep = new Set([...p.photoIds, ...p.shopPhotoIds, ...p.marketPhotoIds]);
@@ -460,7 +484,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     }
     await db.touchProject(pid);
     await clearDraft();
-    toast(t(p.itemId === iid ? 'saved' : 'movedTo', { name: target ? itemTitle(target) : '' }));
+    toast(t(p.itemId === iid ? 'saved' : keepOrig ? 'copiedTo' : 'movedTo', { name: target ? itemTitle(target) : '' }));
     ctx.nav(`/p/${pid}/item/${p.itemId}`, true);
   };
 
@@ -473,6 +497,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     const b = $('#move-to');
     b.textContent = it ? itemTitle(it) : '';
     b.classList.toggle('moved', p.itemId !== iid);
+    $('#keep-wrap').hidden = p.itemId === iid; // 选了别的物品才显示"同时保留在原物品"
   }
   paintMove();
   $('#move-to').onclick = () => openPicker({
