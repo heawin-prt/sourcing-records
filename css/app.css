@@ -491,3 +491,19 @@ img[data-ph] { cursor: zoom-in; }
 .card-inline { display: flex; align-items: center; gap: 12px; padding-top: 10px; padding-bottom: 10px; }
 .card-inline h2 { margin: 0; flex: none; min-width: 4.5em; }
 .card-inline .seg { flex: 1; min-width: 0; margin: 0; }
+
+/* 放大查看：左右滑动换图（适合屏幕时由页面处理滑动；原始大小时交还浏览器滚动）、计数和两侧箭头 */
+.photo-viewer { touch-action: none; user-select: none; -webkit-user-select: none; }
+.photo-viewer.full { touch-action: auto; }
+.photo-viewer .pv-count { position: fixed; top: calc(18px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); color: #fff; font-size: 15px; text-shadow: 0 1px 2px rgba(0,0,0,.6); pointer-events: none; }
+.photo-viewer .pv-nav { position: fixed; top: 50%; transform: translateY(-50%); width: 36px; height: 56px; border: none; border-radius: 10px; background: rgba(255,255,255,.14); color: #fff; font-size: 30px; line-height: 1; padding: 0; }
+.photo-viewer .pv-nav[hidden] { display: none; }
+.photo-viewer .pv-prev { left: 6px; }
+.photo-viewer .pv-next { right: 6px; }
+.photo-viewer.full .pv-nav { display: none; }
+
+/* 价格备注紧跟在"价格"二字后面（同一行）；"+" 留在价格行下面的右端 */
+.label-note-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.label-note-row > span { flex: none; font-size: 13px; }
+.label-note-row input { flex: 1; min-width: 0; }
+.plus-only-row { justify-content: flex-end; }
