@@ -7,6 +7,7 @@ import { loadProject } from './summary.js';
 import { COLUMNS, DEFAULT_COLUMNS, GROUP_BY, pickRows, buildWorkbook } from '../export-excel.js';
 import { buildDocx } from '../export-word.js';
 import { projectType } from './project-new.js';
+import { SUP_WHICH, pickSuppliers, buildSupplierWorkbook } from '../export-suppliers.js';
 
 export async function renderExport(app, { pid }, ctx) {
   const data = await loadProject(pid);
@@ -33,8 +34,34 @@ export async function renderExport(app, { pid }, ctx) {
   const FORMATS = { xlsx: 'Excel', docx: 'Word' };
   if (!FORMATS[prefs.format]) prefs = { ...prefs, format: 'xlsx' };
 
+  let what = (await db.getMeta('exportWhat', 'products')) === 'suppliers' ? 'suppliers' : 'products';
+  const supPrefs = { supWhich: 'all', supCard: true, supPhotos: 1, ...(await db.getMeta('exportSupPrefs', {})) };
+
   app.innerHTML = `
     <form id="form">
+      <div class="card">
+        <h2>${esc(t('exportWhat'))}</h2>
+        <div class="seg seg2" id="what">
+          ${['products', 'suppliers'].map(k => `<button type="button" data-what="${k}" class="${what === k ? 'on st-done' : ''}">${esc(t('what_' + k))}</button>`).join('')}
+        </div>
+      </div>
+
+      <div id="sup-opts">
+        <div class="card">
+          <h2>${esc(t('supWhich'))}</h2>
+          ${SUP_WHICH.map(m => `<label class="check"><input type="radio" name="supWhich" value="${m}" ${supPrefs.supWhich === m ? 'checked' : ''}>
+            <span>${esc(t('supWhich_' + m))} <span class="muted">(${pickSuppliers(data, m).length})</span></span></label>`).join('')}
+        </div>
+        <div class="card">
+          <h2>${esc(t('supIncludePhotos'))}</h2>
+          <label class="check"><input type="checkbox" name="supCard" ${supPrefs.supCard ? 'checked' : ''}>${esc(t('cardPhoto'))}</label>
+          <label class="field"><span>${esc(t('supPhotosPer'))}</span>
+            <select name="supPhotos">${[0, 1, 2, 3].map(n => `<option value="${n}" ${supPrefs.supPhotos === n ? 'selected' : ''}>${n === 0 ? '—' : n}</option>`).join('')}</select>
+          </label>
+        </div>
+      </div>
+
+      <div id="prod-opts">
       <div class="card">
         <h2>${esc(t('exportFormat'))}</h2>
         <div class="seg seg2" id="fmt">
@@ -78,6 +105,7 @@ export async function renderExport(app, { pid }, ctx) {
           ${shownCols.map(colBox).join('')}
         </div>
       </div>
+      </div>
     </form>
     <div id="result"></div>
     <div class="bottom-bar"><div class="inner">
@@ -87,8 +115,22 @@ export async function renderExport(app, { pid }, ctx) {
 
   const form = $('#form');
   let format = prefs.format;
-  const paintGo = () => { $('#go').textContent = t('generateAs', { fmt: FORMATS[format] }); };
-  paintGo();
+  const paintGo = () => { $('#go').textContent = t('generateAs', { fmt: what === 'suppliers' ? 'Excel' : FORMATS[format] }); };
+  const paintWhat = () => {
+    $('#prod-opts').hidden = what !== 'products';
+    $('#sup-opts').hidden = what !== 'suppliers';
+    $$('#what button').forEach(x => { x.className = x.dataset.what === what ? 'on st-done' : ''; });
+    paintGo();
+  };
+  paintWhat();
+  $('#what').onclick = async e => {
+    const b = e.target.closest('[data-what]');
+    if (!b) return;
+    what = b.dataset.what;
+    await db.setMeta('exportWhat', what);
+    $('#result').innerHTML = '';
+    paintWhat();
+  };
   $('#fmt').onclick = e => {
     const b = e.target.closest('[data-fmt]');
     if (!b) return;
@@ -126,14 +168,22 @@ export async function renderExport(app, { pid }, ctx) {
   $('#col-none').onclick = () => $$('[name=col]', form).forEach(x => { x.checked = false; });
 
   $('#go').onclick = async () => {
-    const opts = readOpts();
-    await db.setMeta('exportPrefs', opts);
-    if (!pickRows(data.items, opts.mode, opts.includeEmpty, opts.statuses).length) { toast(t('exportEmpty')); return; }
+    let opts;
+    if (what === 'suppliers') {
+      opts = { supWhich: form.querySelector('[name=supWhich]:checked').value, supCard: form.supCard.checked, supPhotos: Number(form.supPhotos.value) };
+      await db.setMeta('exportSupPrefs', opts);
+      if (!pickSuppliers(data, opts.supWhich).length) { toast(t('exportEmpty')); return; }
+    } else {
+      opts = readOpts();
+      await db.setMeta('exportPrefs', opts);
+      if (!pickRows(data.items, opts.mode, opts.includeEmpty, opts.statuses).length) { toast(t('exportEmpty')); return; }
+    }
     const btn = $('#go');
     btn.disabled = true;
     btn.textContent = t('generating');
     try {
-      const { blob, filename } = opts.format === 'docx' ? await buildDocx(data, opts) : await buildWorkbook(data, opts);
+      const { blob, filename } = what === 'suppliers' ? await buildSupplierWorkbook(data, opts)
+        : opts.format === 'docx' ? await buildDocx(data, opts) : await buildWorkbook(data, opts);
       const file = new File([blob], filename, { type: blob.type });
       const url = URL.createObjectURL(blob);
       const canShare = navigator.canShare && navigator.canShare({ files: [file] });

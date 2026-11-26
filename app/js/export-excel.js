@@ -128,7 +128,7 @@ export function pickRows(items, mode, includeEmpty, statuses = null) {
   return rows;
 }
 
-async function imageInfo(blob) {
+export async function imageInfo(blob) {
   const bmp = await createImageBitmap(blob);
   const info = { w: bmp.width, h: bmp.height };
   if (bmp.close) bmp.close();
