@@ -70,7 +70,11 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         <label class="field"><span>${esc(t('model'))}</span>
           <input type="text" name="model" value="${esc(p.model ?? '')}"></label>
       </div>
-      <div class="field"><span class="muted">${esc(t('price'))}</span>
+      <div class="field">
+        <div class="label-note-row">
+          <span class="muted">${esc(t('price'))}</span>
+          <input type="text" name="priceNote" value="${esc(p.priceNote ?? '')}" placeholder="${esc(t('priceNoteHint'))}">
+        </div>
         <div class="price-row">
           <input type="number" inputmode="decimal" step="0.01" name="price" value="${esc(p.price ?? '')}">
           <select name="priceCurrency" aria-label="${esc(t('priceCurrency'))}">
@@ -84,8 +88,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
           </select>
         </div>
         <div class="muted" id="fx-note"></div>
-        <div class="row shop-row note-plus-row">
-          <input type="text" name="priceNote" value="${esc(p.priceNote ?? '')}" placeholder="${esc(t('priceNoteHint'))}">
+        <div class="row shop-row note-plus-row plus-only-row">
           <button type="button" class="btn icon-btn plus-btn" id="add-price" title="${esc(t('addPrice'))}" aria-label="${esc(t('addPrice'))}">+</button>
         </div>
         <div id="extra-prices"></div>
