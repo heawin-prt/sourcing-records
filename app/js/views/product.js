@@ -272,8 +272,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   }
 
   // —— 新增的价格（每个也有备注）和新增的备注框 ——
-  function renderExtras() {
-    $('#extra-prices').innerHTML = (p.extraPrices || []).map((x, i) => `
+  const priceHtml = (x, i) => `
       <div class="extra-price" data-i="${i}">
         <div class="price-row">
           <input type="number" inputmode="decimal" step="0.01" data-k="price" value="${esc(x.price ?? '')}" aria-label="${esc(t('price'))} ${i + 2}">
@@ -285,26 +284,34 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
           <input type="text" data-k="note" value="${esc(x.note ?? '')}" placeholder="${esc(t('priceNoteHint'))}">
           <button type="button" class="btn icon-btn plus-btn" data-del-price="${i}" title="${esc(t('delete'))}" aria-label="${esc(t('delete'))}">✕</button>
         </div>
-      </div>`).join('');
-    $('#extra-notes').innerHTML = (p.extraNotes || []).map((v, i) => `
+      </div>`;
+  const noteHtml = (v, i) => `
       <div class="row shop-row note-plus-row extra-note">
         <textarea rows="1" aria-label="${esc(t('note'))} ${i + 2}">${esc(v ?? '')}</textarea>
         <button type="button" class="btn icon-btn plus-btn" data-del-note="${i}" title="${esc(t('delete'))}" aria-label="${esc(t('delete'))}">✕</button>
-      </div>`).join('');
+      </div>`;
+  function renderExtras() {
+    $('#extra-prices').innerHTML = (p.extraPrices || []).map(priceHtml).join('');
+    $('#extra-notes').innerHTML = (p.extraNotes || []).map(noteHtml).join('');
     autoGrow(form);
   }
+  // 点 "+" 只在末尾加一组新框，不重画已有的框（避免整块闪一下）
   $('#add-price').onclick = () => {
     collect();
-    p.extraPrices = [...(p.extraPrices || []), { price: null, currency: form.priceCurrency.value || 'CNY', note: '' }];
-    renderExtras();
-    $('#extra-prices .extra-price:last-child [data-k=price]').focus();
+    const x = { price: null, currency: form.priceCurrency.value || 'CNY', note: '' };
+    p.extraPrices = [...(p.extraPrices || []), x];
+    $('#extra-prices').insertAdjacentHTML('beforeend', priceHtml(x, p.extraPrices.length - 1));
+    $('#extra-prices .extra-price:last-child [data-k=price]').focus({ preventScroll: true });
     saveDraft();
   };
   $('#add-note').onclick = () => {
     collect();
     p.extraNotes = [...(p.extraNotes || []), ''];
-    renderExtras();
-    $('#extra-notes .extra-note:last-child textarea').focus();
+    $('#extra-notes').insertAdjacentHTML('beforeend', noteHtml('', p.extraNotes.length - 1));
+    const row = $('#extra-notes .extra-note:last-child');
+    autoGrow(row);
+    row.querySelector('textarea').focus({ preventScroll: true });
+    row.scrollIntoView({ block: 'nearest' });
     saveDraft();
   };
   $('#extra-prices').onclick = e => {
