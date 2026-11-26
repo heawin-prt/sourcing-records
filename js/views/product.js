@@ -139,6 +139,10 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         <div id="extra-notes"></div>
       </div>
       <div class="rec-time muted" id="rec-time"></div>
+      <div class="move-row">
+        <span>${esc(t('moveTo'))}</span>
+        <button type="button" class="pick-btn" id="move-to"></button>
+      </div>
      </div>
     </form>
 
@@ -449,15 +453,34 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
       const keep = new Set([...p.photoIds, ...p.shopPhotoIds, ...p.marketPhotoIds]);
       for (const id of [...(stored.photoIds || []), ...(stored.shopPhotoIds || []), ...(stored.marketPhotoIds || [])]) if (!keep.has(id)) await db.remove('photos', id);
     }
-    // 物品有了第一个候选产品，进度从"未开始"自动改成"待决定"
-    if ((item.status || 'todo') === 'todo') {
-      await db.put('items', { ...item, status: 'pending' });
+    // 物品有了第一个候选产品，进度从"未开始"自动改成"待决定"（移到别的物品时，看新的物品）
+    const target = p.itemId === iid ? item : await db.get('items', p.itemId);
+    if (target && (target.status || 'todo') === 'todo') {
+      await db.put('items', { ...target, status: 'pending' });
     }
     await db.touchProject(pid);
     await clearDraft();
-    toast(t('saved'));
-    ctx.nav(backPath, true);
+    toast(t(p.itemId === iid ? 'saved' : 'movedTo', { name: target ? itemTitle(target) : '' }));
+    ctx.nav(`/p/${pid}/item/${p.itemId}`, true);
   };
+
+  // —— 移到别的物品下面（保存时生效）——
+  const allItems = (await db.listByProject('items', pid))
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.createdAt.localeCompare(b.createdAt));
+  if (!p.itemId || !allItems.some(x => x.id === p.itemId)) p.itemId = iid;
+  function paintMove() {
+    const it = allItems.find(x => x.id === p.itemId);
+    const b = $('#move-to');
+    b.textContent = it ? itemTitle(it) : '';
+    b.classList.toggle('moved', p.itemId !== iid);
+  }
+  paintMove();
+  $('#move-to').onclick = () => openPicker({
+    searchPlaceholder: t('filterPlaceholder'),
+    options: allItems.map(x => ({ value: x.id, label: itemTitle(x), sub: [x.fields?.room, x.id === iid ? t('currentItem') : ''].filter(Boolean).join(' · ') })),
+    selected: p.itemId,
+    onPick: v => { p.itemId = v; paintMove(); saveDraft(); },
+  });
 
   $('#cancel').onclick = async () => {
     for (const id of newPhotoIds) await db.remove('photos', id);
