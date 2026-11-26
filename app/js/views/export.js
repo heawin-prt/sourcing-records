@@ -39,7 +39,7 @@ export async function renderExport(app, { pid }, ctx) {
 
   app.innerHTML = `
     <form id="form">
-      <div class="card">
+      <div class="card card-inline">
         <h2>${esc(t('exportWhat'))}</h2>
         <div class="seg seg2" id="what">
           ${['products', 'suppliers'].map(k => `<button type="button" data-what="${k}" class="${what === k ? 'on st-done' : ''}">${esc(t('what_' + k))}</button>`).join('')}
@@ -62,7 +62,7 @@ export async function renderExport(app, { pid }, ctx) {
       </div>
 
       <div id="prod-opts">
-      <div class="card">
+      <div class="card card-inline">
         <h2>${esc(t('exportFormat'))}</h2>
         <div class="seg seg2" id="fmt">
           ${Object.entries(FORMATS).map(([k, name]) => `<button type="button" data-fmt="${k}" class="${prefs.format === k ? 'on st-done' : ''}">${name}</button>`).join('')}

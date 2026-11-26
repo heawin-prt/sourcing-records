@@ -486,3 +486,8 @@ img[data-ph] { cursor: zoom-in; }
 .extra-price { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
 .extra-prices-line { font-size: 14px; margin: 2px 0 4px; }
 .product-card .price-note, .head .price-note { font-size: 13px; }
+
+/* 导出页：标题和选项按钮放在同一行（导出内容、格式） */
+.card-inline { display: flex; align-items: center; gap: 12px; padding-top: 10px; padding-bottom: 10px; }
+.card-inline h2 { margin: 0; flex: none; min-width: 4.5em; }
+.card-inline .seg { flex: 1; min-width: 0; margin: 0; }
