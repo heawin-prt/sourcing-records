@@ -1,2 +1,2 @@
 // 每次代码改动都要先递增版本号。
-export const VERSION = '0.21.2';
+export const VERSION = '0.21.3';
