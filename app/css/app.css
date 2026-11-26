@@ -441,4 +441,12 @@ body.picker-open { overflow: hidden; }
 .item-photos img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; flex: none; }
 #item-photos.photo-grid { grid-template-columns: repeat(auto-fill, minmax(calc(88px * var(--ph)), calc(100px * var(--ph)))); }
 /* 右上角设置图标不加方框 */
-#go-settings, #go-export { border-color: transparent; }
+#go-settings, #go-export, #edit-item { border-color: transparent; }
+
+/* 点击图片放大 */
+img[data-ph] { cursor: zoom-in; }
+.photo-viewer { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.92); display: flex; align-items: center; justify-content: center; overflow: auto; }
+.photo-viewer img { max-width: 100vw; max-height: 100vh; object-fit: contain; cursor: zoom-in; }
+.photo-viewer.full { display: block; }
+.photo-viewer.full img { max-width: none; max-height: none; cursor: zoom-out; }
+.photo-viewer .pv-close { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 12px; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,.2); color: #fff; font-size: 20px; }
