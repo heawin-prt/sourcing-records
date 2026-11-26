@@ -65,6 +65,12 @@ export const COLUMNS = [
   { key: 'priceCny', label: () => t('priceCny'), group: 'product', width: 12, num: true, money: true, get: (it, p) => p?.priceCny ?? '' },
   // 换算币种和报价币种相同时，这一列直接写报价（不留空）
   { key: 'priceFx', label: () => t('colFx'), group: 'product', width: 14, get: (it, p) => productFx(p) || (p?.fxCurrency && p.fxCurrency === productPrice(p).currency ? fmtProductPrice(p) : '') },
+  { key: 'priceNote', label: () => t('colPriceNote'), group: 'product', width: 16, get: (it, p) => p?.priceNote ?? '' },
+  // 新增的价格：每个一行，"报价（≈ ¥）· 备注"
+  { key: 'otherPrices', label: () => t('colOtherPrices'), group: 'product', width: 24, get: (it, p) => (p?.extraPrices || []).map(x => [
+    fmtProductPrice({ price: x.price, priceCurrency: x.currency }) + (x.currency !== 'CNY' && x.cny != null ? ` (≈ ¥${x.cny})` : ''),
+    x.note,
+  ].filter(Boolean).join(' · ')).join('\n') },
   { key: 'productQty', label: () => t('colQty'), group: 'product', width: 8, num: true, get: (it, p) => rowQty(it, p) ?? '' },
   // 小计 = 单价 × 数量；导出时写成 Excel 公式
   { key: 'amount', label: () => t('colSubtotal'), group: 'product', width: 13, num: true, money: true, get: (it, p) => rowAmount(it, p) ?? '' },
@@ -77,13 +83,13 @@ export const COLUMNS = [
   { key: 'leadTime', label: () => t('leadTime'), group: 'product', width: 10, get: (it, p) => p?.leadTime ?? '' },
   { key: 'moq', label: () => t('moq'), group: 'product', width: 12, get: (it, p) => p?.moq ?? '' },
   { key: 'quality', label: () => t('quality'), group: 'product', width: 10, get: (it, p) => p?.quality ?? '' },
-  { key: 'note', label: () => t('note'), group: 'product', width: 28, get: (it, p) => p?.note ?? '' },
+  { key: 'note', label: () => t('note'), group: 'product', width: 28, get: (it, p) => [p?.note, ...(p?.extraNotes || [])].filter(Boolean).join('\n') },
   { key: 'recordedAt', label: () => t('recordedAt'), group: 'product', width: 17, get: (it, p) => fmtDateTime(p?.recordedAt) },
   { key: 'recorder', label: () => t('recorder'), group: 'product', width: 10, get: (it, p) => p?.createdBy ?? '' },
 ];
 
 export const DEFAULT_COLUMNS = ['category', 'itemName', 'item_room', 'productName', 'model', 'supplierName', 'phone', 'booth',
-  'priceQuoted', 'priceCny', 'priceFx', 'productQty', 'amount', 'total', 'rating', 'material', 'size', 'color', 'leadTime', 'moq', 'note'];
+  'priceQuoted', 'priceCny', 'priceFx', 'priceNote', 'otherPrices', 'productQty', 'amount', 'total', 'rating', 'material', 'size', 'color', 'leadTime', 'moq', 'note'];
 
 /** 导出时的排列/分组方式。 */
 export const GROUP_BY = ['none', 'item', 'category', 'supplier', 'product'];

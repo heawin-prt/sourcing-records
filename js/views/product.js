@@ -84,6 +84,11 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
           </select>
         </div>
         <div class="muted" id="fx-note"></div>
+        <div class="row shop-row note-plus-row">
+          <input type="text" name="priceNote" value="${esc(p.priceNote ?? '')}" placeholder="${esc(t('priceNoteHint'))}">
+          <button type="button" class="btn icon-btn plus-btn" id="add-price" title="${esc(t('addPrice'))}" aria-label="${esc(t('addPrice'))}">+</button>
+        </div>
+        <div id="extra-prices"></div>
       </div>
       <div class="field"><span class="muted">${esc(t('rating'))}</span>
         <div class="rating" id="rating">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-r="${n}" aria-label="${n}">★</button>`).join('')}</div>
@@ -123,7 +128,13 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         <label class="field"><span>${esc(t('moq'))}</span><input type="text" name="moq" value="${esc(p.moq ?? '')}" placeholder="${esc(t('moqHint'))}"></label>
         <label class="field"><span>${esc(t('plannedQty'))}</span><input type="number" inputmode="numeric" name="qty" value="${esc(p.qty ?? '')}"></label>
       </div>
-      <label class="field"><span>${esc(t('note'))}</span><textarea name="note" rows="1">${esc(p.note ?? '')}</textarea></label>
+      <div class="field"><span>${esc(t('note'))}</span>
+        <div class="row shop-row note-plus-row">
+          <textarea name="note" rows="1">${esc(p.note ?? '')}</textarea>
+          <button type="button" class="btn icon-btn plus-btn" id="add-note" title="${esc(t('addNote'))}" aria-label="${esc(t('addNote'))}">+</button>
+        </div>
+        <div id="extra-notes"></div>
+      </div>
       <div class="rec-time muted" id="rec-time"></div>
      </div>
     </form>
@@ -248,7 +259,69 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     for (const k of ['name', 'model', 'marketName', 'shopInfo', ...TEXT_FIELDS, 'moq', 'note']) if (form.elements[k]) p[k] = form.elements[k].value.trim();
     p.supplierId = form.supplierId.value || null;
     p.fxCurrency = form.fxCurrency.value || null;
+    p.priceNote = form.priceNote.value.trim();
+    p.extraPrices = $$('#extra-prices .extra-price').map(el => ({
+      price: num(el.querySelector('[data-k=price]').value),
+      currency: el.querySelector('[data-k=currency]').value || 'CNY',
+      note: el.querySelector('[data-k=note]').value.trim(),
+    }));
+    p.extraNotes = $$('#extra-notes textarea').map(el => el.value);
   }
+
+  // —— 新增的价格（每个也有备注）和新增的备注框 ——
+  function renderExtras() {
+    $('#extra-prices').innerHTML = (p.extraPrices || []).map((x, i) => `
+      <div class="extra-price" data-i="${i}">
+        <div class="price-row">
+          <input type="number" inputmode="decimal" step="0.01" data-k="price" value="${esc(x.price ?? '')}" aria-label="${esc(t('price'))} ${i + 2}">
+          <select data-k="currency" aria-label="${esc(t('priceCurrency'))}">
+            ${PRICE_CURRENCIES.map(c => `<option value="${c}" ${c === x.currency ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="row shop-row note-plus-row">
+          <input type="text" data-k="note" value="${esc(x.note ?? '')}" placeholder="${esc(t('priceNoteHint'))}">
+          <button type="button" class="btn icon-btn plus-btn" data-del-price="${i}" title="${esc(t('delete'))}" aria-label="${esc(t('delete'))}">✕</button>
+        </div>
+      </div>`).join('');
+    $('#extra-notes').innerHTML = (p.extraNotes || []).map((v, i) => `
+      <div class="row shop-row note-plus-row extra-note">
+        <textarea rows="1" aria-label="${esc(t('note'))} ${i + 2}">${esc(v ?? '')}</textarea>
+        <button type="button" class="btn icon-btn plus-btn" data-del-note="${i}" title="${esc(t('delete'))}" aria-label="${esc(t('delete'))}">✕</button>
+      </div>`).join('');
+    autoGrow(form);
+  }
+  $('#add-price').onclick = () => {
+    collect();
+    p.extraPrices = [...(p.extraPrices || []), { price: null, currency: form.priceCurrency.value || 'CNY', note: '' }];
+    renderExtras();
+    $('#extra-prices .extra-price:last-child [data-k=price]').focus();
+    saveDraft();
+  };
+  $('#add-note').onclick = () => {
+    collect();
+    p.extraNotes = [...(p.extraNotes || []), ''];
+    renderExtras();
+    $('#extra-notes .extra-note:last-child textarea').focus();
+    saveDraft();
+  };
+  $('#extra-prices').onclick = e => {
+    const b = e.target.closest('[data-del-price]');
+    if (!b) return;
+    collect();
+    p.extraPrices.splice(Number(b.dataset.delPrice), 1);
+    renderExtras();
+    saveDraft();
+  };
+  $('#extra-notes').onclick = e => {
+    const b = e.target.closest('[data-del-note]');
+    if (!b) return;
+    collect();
+    p.extraNotes.splice(Number(b.dataset.delNote), 1);
+    renderExtras();
+    saveDraft();
+  };
+  $('#extra-prices').onchange = () => saveDraft();
+  renderExtras();
 
   // —— 币种换算（汇率以人民币为基准：1 元 = rate 外币）——
   // 已保存的产品若币种没变，沿用保存时的汇率快照；否则用当天汇率。
@@ -321,6 +394,11 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     const fx = fxRate();
     p.fxRate = fx ? fx.rate : null;
     p.fxDate = fx ? fx.date : null;
+    p.extraPrices = (p.extraPrices || []).filter(x => x.price !== null || x.note).map(x => {
+      const r = x.currency === 'CNY' ? 1 : rates?.rates?.[x.currency];
+      return { ...x, cny: x.price === null || !r ? null : Math.round(x.price / r * 100) / 100 };
+    });
+    p.extraNotes = (p.extraNotes || []).map(v => v.trim()).filter(Boolean);
     // 记住这次选的两个币种，下次新建产品默认用它们
     await db.setMeta('lastPriceCurrency', p.priceCurrency);
     await db.setMeta('lastSupplier:' + pid, p.supplierId || null);
