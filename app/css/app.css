@@ -478,3 +478,11 @@ img[data-ph] { cursor: zoom-in; }
 
 /* 供应商的其他图片：随设置里的图片大小 */
 #sup-photos.photo-grid { grid-template-columns: repeat(auto-fill, minmax(calc(88px * var(--ph)), calc(100px * var(--ph)))); }
+
+/* 价格备注、新增价格、新增备注：右边 + / ✕ 按钮 */
+.note-plus-row { margin-top: 4px; }
+.note-plus-row input, .note-plus-row textarea { flex: 1; min-width: 0; }
+.form-compact .plus-btn { font-size: 20px; font-weight: 600; line-height: 1; color: var(--primary); }
+.extra-price { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.extra-prices-line { font-size: 14px; margin: 2px 0 4px; }
+.product-card .price-note, .head .price-note { font-size: 13px; }

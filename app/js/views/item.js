@@ -64,12 +64,14 @@ export async function renderItem(app, { pid, iid }, ctx) {
           <span class="product-name">${esc([p.name, p.model].filter(Boolean).join(' · '))}</span>
           ${p.rating ? `<span class="stars">${stars(p.rating)}</span>` : ''}
         </div>` : ''}
-        ${fmtProductPrice(p) || p.qty ? `<div class="head">
+        ${fmtProductPrice(p) || p.qty || p.priceNote ? `<div class="head">
           ${fmtProductPrice(p) ? `<span class="price">${esc(fmtProductPrice(p))}</span>` : ''}
           ${productPrice(p).currency !== 'CNY' && p.priceCny != null ? `<span class="muted">≈ ${esc(fmtMoney(p.priceCny))}</span>` : ''}
           ${productFx(p) ? `<span class="muted">≈ ${esc(productFx(p))}</span>` : ''}
           ${p.qty ? `<span class="muted">×${esc(p.qty)}</span>` : ''}
+          ${p.priceNote ? `<span class="muted price-note">${esc(p.priceNote)}</span>` : ''}
         </div>` : ''}
+        ${(p.extraPrices || []).length ? `<div class="extra-prices-line">${p.extraPrices.map(x => `<div>${esc(extraPriceText(x))}</div>`).join('')}</div>` : ''}
         ${productLines(p, sup) ? `<div class="muted">${productLines(p, sup)}</div>` : ''}
         <div class="row product-actions">
           <label class="check"><input type="checkbox" data-choose="${esc(p.id)}" ${p.chosen ? 'checked' : ''}>${esc(t('chosen'))}</label>
@@ -263,6 +265,13 @@ export function fieldText(item, fd) {
   return `${v} ${item.fields[fd.key + 'Currency'] || 'CNY'}`;
 }
 
+/** 新增价格的显示：报价（≈ 人民币）· 备注 */
+function extraPriceText(x) {
+  const price = fmtProductPrice({ price: x.price, priceCurrency: x.currency });
+  const cny = x.currency !== 'CNY' && x.cny != null ? ` ≈ ${fmtMoney(x.cny)}` : '';
+  return [price && price + cny, x.note].filter(Boolean).join(' · ');
+}
+
 /** 产品卡片的说明行：没有内容的行不显示（不留空行）。 */
 function productLines(p, sup) {
   const join = arr => arr.filter(v => v !== undefined && v !== null && String(v).trim() !== '').join(' · ');
@@ -271,6 +280,7 @@ function productLines(p, sup) {
     join([p.marketName, p.shopInfo]),
     join([p.material, p.size, p.color, p.quality, p.leadTime && `${t('leadTime')}: ${p.leadTime}`, p.moq && `${t('moq')}: ${p.moq}`]),
     p.note,
+    ...(p.extraNotes || []),
     join([fmtDateTime(p.recordedAt), p.createdBy]),
   ].filter(v => v && String(v).trim()).map(v => esc(v)).join('<br>');
 }
