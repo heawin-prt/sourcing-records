@@ -266,6 +266,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     p.extraPrices = $$('#extra-prices .extra-price').map(el => ({
       price: num(el.querySelector('[data-k=price]').value),
       currency: el.querySelector('[data-k=currency]').value || 'CNY',
+      fxCurrency: el.querySelector('[data-k=fxCurrency]').value || null,
       note: el.querySelector('[data-k=note]').value.trim(),
     }));
     p.extraNotes = $$('#extra-notes textarea').map(el => el.value);
@@ -274,17 +275,39 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   // —— 新增的价格（每个也有备注）和新增的备注框 ——
   const priceHtml = (x, i) => `
       <div class="extra-price" data-i="${i}">
+        <div class="label-note-row">
+          <span class="muted">${esc(t('price'))} ${i + 2}</span>
+          <input type="text" data-k="note" value="${esc(x.note ?? '')}" placeholder="${esc(t('priceNoteHint'))}">
+        </div>
         <div class="price-row">
           <input type="number" inputmode="decimal" step="0.01" data-k="price" value="${esc(x.price ?? '')}" aria-label="${esc(t('price'))} ${i + 2}">
           <select data-k="currency" aria-label="${esc(t('priceCurrency'))}">
             ${PRICE_CURRENCIES.map(c => `<option value="${c}" ${c === x.currency ? 'selected' : ''}>${c}</option>`).join('')}
           </select>
+          <span class="unit">≈</span>
+          <input type="text" data-k="fxout" class="fx-box" readonly tabindex="-1" aria-label="${esc(t('colFx'))}">
+          <select data-k="fxCurrency" aria-label="${esc(t('fxCurrency'))}">
+            <option value="">—</option>
+            ${PRICE_CURRENCIES.map(c => `<option value="${c}" ${c === x.fxCurrency ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
         </div>
-        <div class="row shop-row note-plus-row">
-          <input type="text" data-k="note" value="${esc(x.note ?? '')}" placeholder="${esc(t('priceNoteHint'))}">
+        <div class="row shop-row note-plus-row plus-only-row">
           <button type="button" class="btn icon-btn plus-btn" data-del-price="${i}" title="${esc(t('delete'))}" aria-label="${esc(t('delete'))}">✕</button>
         </div>
       </div>`;
+  /** 新增价格的换算（按当天汇率，人民币为基准）。 */
+  const todayRate = cur => (!cur ? null : cur === 'CNY' ? 1 : rates?.rates?.[cur] || null);
+  function extraFx(price, cur, fxCur) {
+    if (price === null || !fxCur) return null;
+    if (fxCur === cur) return price;
+    const r1 = todayRate(cur), r2 = todayRate(fxCur);
+    return r1 && r2 ? convert(price / r1, r2) : null;
+  }
+  function paintExtraFx(el) {
+    const v = extraFx(num(el.querySelector('[data-k=price]').value), el.querySelector('[data-k=currency]').value, el.querySelector('[data-k=fxCurrency]').value);
+    el.querySelector('[data-k=fxout]').value = v === null ? '' : v.toFixed(2);
+  }
+  const paintAllExtraFx = () => $$('#extra-prices .extra-price').forEach(paintExtraFx);
   const noteHtml = (v, i) => `
       <div class="row shop-row note-plus-row extra-note">
         <textarea rows="1" aria-label="${esc(t('note'))} ${i + 2}">${esc(v ?? '')}</textarea>
@@ -294,11 +317,12 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     $('#extra-prices').innerHTML = (p.extraPrices || []).map(priceHtml).join('');
     $('#extra-notes').innerHTML = (p.extraNotes || []).map(noteHtml).join('');
     autoGrow(form);
+    paintAllExtraFx();
   }
   // 点 "+" 只在末尾加一组新框，不重画已有的框（避免整块闪一下）
   $('#add-price').onclick = () => {
     collect();
-    const x = { price: null, currency: form.priceCurrency.value || 'CNY', note: '' };
+    const x = { price: null, currency: form.priceCurrency.value || 'CNY', fxCurrency: form.fxCurrency.value || null, note: '' };
     p.extraPrices = [...(p.extraPrices || []), x];
     $('#extra-prices').insertAdjacentHTML('beforeend', priceHtml(x, p.extraPrices.length - 1));
     $('#extra-prices .extra-price:last-child [data-k=price]').focus({ preventScroll: true });
@@ -330,13 +354,13 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     renderExtras();
     saveDraft();
   };
-  $('#extra-prices').onchange = () => saveDraft();
-  renderExtras();
+  $('#extra-prices').onchange = e => { const el = e.target.closest('.extra-price'); if (el) paintExtraFx(el); saveDraft(); };
+  $('#extra-prices').oninput = e => { const el = e.target.closest('.extra-price'); if (el) paintExtraFx(el); };
 
   // —— 币种换算（汇率以人民币为基准：1 元 = rate 外币）——
   // 已保存的产品若币种没变，沿用保存时的汇率快照；否则用当天汇率。
   let rates = null;
-  const ratesReady = getRates().then(r => { rates = r; paintFx(); });
+  const ratesReady = getRates().then(r => { rates = r; paintFx(); paintAllExtraFx(); });
   function rateFor(cur, snapCur, snapRate, snapDate) {
     if (!cur) return null;
     if (cur === 'CNY') return { rate: 1, date: null };
@@ -366,6 +390,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   form.fxCurrency.onchange = () => { paintFx(); saveDraft(); };
   form.priceCurrency.onchange = () => { paintFx(); saveDraft(); };
   paintFx();
+  renderExtras();
 
   form.oninput = e => {
     if (e.target.name === 'price') paintFx();
@@ -405,8 +430,13 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     p.fxRate = fx ? fx.rate : null;
     p.fxDate = fx ? fx.date : null;
     p.extraPrices = (p.extraPrices || []).filter(x => x.price !== null || x.note).map(x => {
-      const r = x.currency === 'CNY' ? 1 : rates?.rates?.[x.currency];
-      return { ...x, cny: x.price === null || !r ? null : Math.round(x.price / r * 100) / 100 };
+      const r = todayRate(x.currency);
+      return {
+        ...x,
+        cny: x.price === null || !r ? null : Math.round(x.price / r * 100) / 100,
+        fxRate: todayRate(x.fxCurrency),
+        fx: extraFx(x.price, x.currency, x.fxCurrency),
+      };
     });
     p.extraNotes = (p.extraNotes || []).map(v => v.trim()).filter(Boolean);
     // 记住这次选的两个币种，下次新建产品默认用它们
