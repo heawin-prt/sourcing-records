@@ -183,7 +183,10 @@ export async function openEditor(id, onSaved) {
   let k = 1; // 显示比例：显示像素 / 图片像素
 
   function layout() {
-    const sw = stage.clientWidth, sh = stage.clientHeight;
+    // clientWidth/Height 含内边距，要减掉（裁剪时四周留白就靠内边距）
+    const cs = getComputedStyle(stage);
+    const sw = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const sh = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     k = Math.min(sw / base.width, sh / base.height);
     const dpr = window.devicePixelRatio || 1;
     cv.style.width = Math.round(base.width * k) + 'px';
@@ -235,6 +238,11 @@ export async function openEditor(id, onSaved) {
     el.querySelector('.pe-colors').hidden = !!crop;
     el.querySelector('.pe-crop-bar').hidden = !crop;
     el.querySelector('.pe-top').classList.toggle('dim', !!crop);
+    // 裁剪时把图片缩小、四周留出空白，框的边不贴着屏幕边缘（手机边缘手势会抢走拖动）
+    if (stage.classList.contains('cropping') !== !!crop) {
+      stage.classList.toggle('cropping', !!crop);
+      layout();
+    }
   }
 
   function pushHistory() {
@@ -264,7 +272,6 @@ export async function openEditor(id, onSaved) {
       layout();
     } else if (k2 === 'crop') {
       crop = { x: 0, y: 0, w: base.width, h: base.height };
-      draw();
     } else {
       tool = k2;
     }
@@ -274,7 +281,7 @@ export async function openEditor(id, onSaved) {
     const b = e.target.closest('[data-color]');
     if (b) { color = b.dataset.color; refreshTools(); }
   };
-  el.querySelector('#pe-crop-cancel').onclick = () => { crop = null; draw(); refreshTools(); };
+  el.querySelector('#pe-crop-cancel').onclick = () => { crop = null; refreshTools(); };
   el.querySelector('#pe-crop-ok').onclick = () => {
     if (crop.w < base.width - 1 || crop.h < base.height - 1) {
       pushHistory();
@@ -311,11 +318,11 @@ export async function openEditor(id, onSaved) {
     return { x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k };
   };
   let drag = null;
-  cv.onpointerdown = e => {
-    cv.setPointerCapture(e.pointerId);
+  stage.onpointerdown = e => {
+    stage.setPointerCapture(e.pointerId);
     const p = pt(e);
     if (crop) {
-      const tol = 28 / k;
+      const tol = 32 / k;
       const corners = { nw: [crop.x, crop.y], ne: [crop.x + crop.w, crop.y], sw: [crop.x, crop.y + crop.h], se: [crop.x + crop.w, crop.y + crop.h] };
       let mode = null;
       for (const [name, [cx, cy]] of Object.entries(corners)) if (Math.abs(p.x - cx) < tol && Math.abs(p.y - cy) < tol) mode = name;
@@ -323,12 +330,13 @@ export async function openEditor(id, onSaved) {
       drag = mode && { mode, p, c0: { ...crop } };
       return;
     }
+    if (p.x < 0 || p.y < 0 || p.x > base.width || p.y > base.height) return;
     drag = { p };
     if (tool === 'arrow' || tool === 'circle') {
       draft = { type: tool, color, w: unit(base), x1: p.x, y1: p.y, x2: p.x, y2: p.y };
     }
   };
-  cv.onpointermove = e => {
+  stage.onpointermove = e => {
     if (!drag) return;
     const p = pt(e);
     if (crop) {
@@ -353,7 +361,7 @@ export async function openEditor(id, onSaved) {
     }
     if (draft) { draft.x2 = p.x; draft.y2 = p.y; draw(); }
   };
-  cv.onpointerup = async e => {
+  stage.onpointerup = async e => {
     if (!drag) return;
     const p = pt(e);
     const start = drag.p;
@@ -377,7 +385,7 @@ export async function openEditor(id, onSaved) {
       }
     }
   };
-  cv.onpointercancel = () => { drag = null; draft = null; draw(); };
+  stage.onpointercancel = () => { drag = null; draft = null; draw(); };
 
   window.addEventListener('resize', layout);
   window.addEventListener('hashchange', close);
