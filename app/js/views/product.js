@@ -20,7 +20,8 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   const stored = isNew ? null : await db.get('products', prid);
   if (!isNew && !stored) return ctx.nav(`/p/${pid}/item/${iid}`, true);
   const backPath = `/p/${pid}/item/${iid}`;
-  const expo = projectType(await db.get('projects', pid)) === 'exhibition'; // 展会：展位信息，没有市场名称
+  const project = await db.get('projects', pid);
+  const expo = projectType(project) === 'exhibition'; // 展会：展位信息，没有市场名称
   const prev = await inputHistory(expo, prid);
   const draftKey = `draft:${prid || 'new:' + iid}`;
 
@@ -34,7 +35,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
   if (!draft && !stored) {
     p.priceCurrency = await db.getMeta('lastPriceCurrency', 'CNY');
     p.supplierId = await db.getMeta('lastSupplier:' + pid, null); // 供应商默认为本项目上一条记录所选的
-    p.fxCurrency = await db.getMeta('lastFxCurrency', 'USD');
+    p.fxCurrency = project?.fxCurrency ?? await db.getMeta('lastFxCurrency', 'USD'); // 换算币种全项目统一
   }
   // 旧数据只有人民币价格
   if (p.price === undefined) { p.price = p.priceCny ?? null; p.priceCurrency = p.priceCurrency || 'CNY'; }
@@ -72,7 +73,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
       </div>
       <div class="field">
         <div class="label-note-row">
-          <span class="muted">${esc(t('price'))}</span>
+          <span class="muted" id="price-label">${esc(t('price'))}</span>
           <input type="text" name="priceNote" value="${esc(p.priceNote ?? '')}" placeholder="${esc(t('priceNoteHint'))}">
         </div>
         <div class="price-row">
@@ -318,11 +319,15 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
         <textarea rows="1" aria-label="${esc(t('note'))} ${i + 2}">${esc(v ?? '')}</textarea>
         <button type="button" class="btn icon-btn plus-btn" data-del-note="${i}" title="${esc(t('delete'))}" aria-label="${esc(t('delete'))}">✕</button>
       </div>`;
+  function paintPriceLabel() {
+    $('#price-label').textContent = (p.extraPrices || []).length ? `${t('price')} 1` : t('price');
+  }
   function renderExtras() {
     $('#extra-prices').innerHTML = (p.extraPrices || []).map(priceHtml).join('');
     $('#extra-notes').innerHTML = (p.extraNotes || []).map(noteHtml).join('');
     autoGrow(form);
     paintAllExtraFx();
+    paintPriceLabel();
   }
   // 点 "+" 只在末尾加一组新框，不重画已有的框（避免整块闪一下）
   $('#add-price').onclick = () => {
@@ -330,6 +335,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     const x = { price: null, currency: form.priceCurrency.value || 'CNY', fxCurrency: form.fxCurrency.value || null, note: '' };
     p.extraPrices = [...(p.extraPrices || []), x];
     $('#extra-prices').insertAdjacentHTML('beforeend', priceHtml(x, p.extraPrices.length - 1));
+    paintPriceLabel();
     $('#extra-prices .extra-price:last-child [data-k=price]').focus({ preventScroll: true });
     saveDraft();
   };
@@ -359,7 +365,17 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     renderExtras();
     saveDraft();
   };
-  $('#extra-prices').onchange = e => { const el = e.target.closest('.extra-price'); if (el) paintExtraFx(el); saveDraft(); };
+  $('#extra-prices').onchange = e => {
+    if (e.target.dataset.k === 'fxCurrency') return syncFx(e.target.value);
+    const el = e.target.closest('.extra-price'); if (el) paintExtraFx(el); saveDraft();
+  };
+  function syncFx(cur) {
+    form.fxCurrency.value = cur;
+    $$('#extra-prices [data-k=fxCurrency]').forEach(s => { s.value = cur; });
+    paintFx();
+    paintAllExtraFx();
+    saveDraft();
+  }
   $('#extra-prices').oninput = e => { const el = e.target.closest('.extra-price'); if (el) paintExtraFx(el); };
 
   // —— 币种换算（汇率以人民币为基准：1 元 = rate 外币）——
@@ -392,7 +408,7 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     const missing = (form.priceCurrency.value && !priceRate()) || (cur && !fx);
     $('#fx-note').textContent = missing ? t('fxUnavailable') : '';
   }
-  form.fxCurrency.onchange = () => { paintFx(); saveDraft(); };
+  form.fxCurrency.onchange = () => syncFx(form.fxCurrency.value);
   form.priceCurrency.onchange = () => { paintFx(); saveDraft(); };
   paintFx();
   renderExtras();
@@ -448,6 +464,24 @@ export async function renderProductForm(app, { pid, iid, prid }, ctx) {
     await db.setMeta('lastPriceCurrency', p.priceCurrency);
     await db.setMeta('lastSupplier:' + pid, p.supplierId || null);
     await db.setMeta('lastFxCurrency', p.fxCurrency || '');
+    if ((p.fxCurrency || null) !== (project?.fxCurrency ?? undefined)) {
+      const cur = p.fxCurrency || null;
+      p.extraPrices = p.extraPrices.map(x => ({ ...x, fxCurrency: cur, fxRate: todayRate(cur), fx: extraFx(x.price, x.currency, cur) }));
+      for (const q of await db.listByProject('products', pid)) {
+        if (q.id === p.id) continue;
+        const sameMain = (q.fxCurrency || null) === cur;
+        const extrasSame = (q.extraPrices || []).every(x => (x.fxCurrency || null) === cur);
+        if (sameMain && extrasSame) continue;
+        await db.put('products', {
+          ...q,
+          fxCurrency: cur,
+          fxRate: sameMain ? q.fxRate : todayRate(cur),
+          fxDate: sameMain ? q.fxDate : (cur === 'CNY' ? null : rates?.date ?? null),
+          extraPrices: (q.extraPrices || []).map(x => ({ ...x, fxCurrency: cur, fxRate: todayRate(cur), fx: extraFx(x.price, x.currency, cur) })),
+        });
+      }
+      await db.put('projects', { ...(await db.get('projects', pid)), fxCurrency: cur });
+    }
     const targetId = p.itemId;
     const keepOrig = targetId !== iid && $('#keep-orig').checked;
     if (keepOrig) p.itemId = iid;
