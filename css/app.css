@@ -29,6 +29,8 @@
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+:root { color-scheme: light dark; }
+html { background: var(--bg); }
 html, body { margin: 0; }
 body {
   background: var(--bg);
@@ -452,8 +454,8 @@ img[data-ph] { cursor: zoom-in; }
 .photo-viewer .pv-close { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 12px; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,.2); color: #fff; font-size: 20px; }
 
 /* 照片查看器里的编辑按钮 + 照片编辑器 */
-.photo-viewer .pv-edit { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 12px; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,.2); color: #fff; display: flex; align-items: center; justify-content: center; }
-.photo-viewer .pv-edit .icon { width: 20px; height: 20px; }
+.photo-viewer .pv-edit { position: fixed; bottom: calc(18px + env(safe-area-inset-bottom)); right: 16px; width: 52px; height: 52px; border-radius: 50%; border: none; background: #e53935; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
+.photo-viewer .pv-edit .icon { width: 24px; height: 24px; }
 .photo-editor { position: fixed; inset: 0; z-index: 1001; background: #111; color: #fff; display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); user-select: none; -webkit-user-select: none; }
 .photo-editor .spacer { flex: 1; }
 .pe-top, .pe-crop-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; }
