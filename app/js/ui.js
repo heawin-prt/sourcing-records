@@ -198,6 +198,39 @@ export function stars(n) {
 
 export const STATUSES = ['todo', 'pending', 'done', 'notfound'];
 
+/** 在 anchor 按钮下方弹出状态选择小菜单；选中后调用 onPick(status)。 */
+export function openStatusMenu(anchor, current, onPick) {
+  closeStatusMenu();
+  const r = anchor.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.id = 'st-menu';
+  el.className = 'st-menu';
+  el.innerHTML = STATUSES.map(s => `<button type="button" data-st="${s}" class="${s === current ? 'on' : ''}">
+    <span class="dot st-${s}"></span>${esc(t('status_' + s))}</button>`).join('');
+  el.style.top = `${r.bottom + 4}px`;
+  el.style.right = `${Math.max(8, document.documentElement.clientWidth - r.right)}px`;
+  document.body.appendChild(el);
+  // 菜单超出屏幕底部时改为向上弹
+  const mr = el.getBoundingClientRect();
+  if (mr.bottom > window.innerHeight - 8) el.style.top = `${Math.max(8, r.top - mr.height - 4)}px`;
+  el.onclick = e => {
+    const b = e.target.closest('[data-st]');
+    if (!b) return;
+    closeStatusMenu();
+    if (b.dataset.st !== current) onPick(b.dataset.st);
+  };
+  setTimeout(() => document.addEventListener('pointerdown', outside, true), 0);
+}
+function outside(e) {
+  const el = document.getElementById('st-menu');
+  if (el && !el.contains(e.target)) closeStatusMenu();
+}
+export function closeStatusMenu() {
+  document.getElementById('st-menu')?.remove();
+  document.removeEventListener('pointerdown', outside, true);
+}
+window.addEventListener('hashchange', closeStatusMenu);
+
 /** 清单物品名称：有数量就在后面跟 ×数量，没有就只显示名称（任何地方都用它）。 */
 export function itemTitle(it) {
   if (!it) return '';
