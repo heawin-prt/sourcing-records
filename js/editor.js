@@ -237,7 +237,6 @@ export async function openEditor(id, onSaved) {
     el.querySelector('.pe-tools').hidden = !!crop;
     el.querySelector('.pe-colors').hidden = !!crop;
     el.querySelector('.pe-crop-bar').hidden = !crop;
-    el.querySelector('.pe-top').classList.toggle('dim', !!crop);
     // 裁剪时把图片缩小、四周留出空白，框的边不贴着屏幕边缘（手机边缘手势会抢走拖动）
     if (stage.classList.contains('cropping') !== !!crop) {
       stage.classList.toggle('cropping', !!crop);
@@ -282,7 +281,7 @@ export async function openEditor(id, onSaved) {
     if (b) { color = b.dataset.color; refreshTools(); }
   };
   el.querySelector('#pe-crop-cancel').onclick = () => { crop = null; refreshTools(); };
-  el.querySelector('#pe-crop-ok').onclick = () => {
+  function applyCrop() {
     if (crop.w < base.width - 1 || crop.h < base.height - 1) {
       pushHistory();
       base = cropCanvas(flatten(base, shapes), crop);
@@ -291,8 +290,10 @@ export async function openEditor(id, onSaved) {
     crop = null;
     layout();
     refreshTools();
-  };
-  el.querySelector('#pe-cancel').onclick = close;
+  }
+  el.querySelector('#pe-crop-ok').onclick = applyCrop;
+  // 裁剪中点上面的"取消"= 放弃这次裁剪；否则关闭编辑器
+  el.querySelector('#pe-cancel').onclick = () => { if (crop) { crop = null; refreshTools(); } else close(); };
   const orig = el.querySelector('#pe-original');
   if (orig) orig.onclick = async () => {
     pushHistory();
@@ -302,6 +303,7 @@ export async function openEditor(id, onSaved) {
     refreshTools();
   };
   el.querySelector('#pe-save').onclick = async () => {
+    if (crop) applyCrop(); // 裁剪中直接点保存 = 先应用裁剪再保存
     if (!dirty && !shapes.length) { close(); return; }
     const out = flatten(base, shapes);
     const blob = await canvasBlob(out, 1600, 0.85);
